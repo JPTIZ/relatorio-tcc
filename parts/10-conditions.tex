@@ -1,0 +1,17 @@
+\section{Condições dos experimentos}
+
+Os parâmetros de geração foram assim selecionados: número fixo de endereços
+compartilhados (32), número variável de operações de acesso à memória ($1Ki$,
+$2Ki$, $4Ki$, $8Ki$, $16Ki$), número variável de \textit{cores} ($8$, $16$,
+$32$).  Quanto às \textit{caches}, utilizaram-se as mesmas configurações e
+tamanho de \textit{caches} descritos no Capítulo 6.1 de~\cite{Andrade:2017}:
+mecanismo de coerência \textit{MESI Three Level}; \textit{caches} L0 de 4KB,
+mapeamento direto, privativas e divididas entre instruções e dados;
+\textit{caches} L1 de 64KB, \textit{2-way}, privadas e unificadas; e uma
+\textit{cache} L2 de 2MB, \textit{8-way} e compartilhada.
+
+Foram escolhidas \textit{biasing constraints} de forma a impor alinhamento ao
+bloco, \textit{true sharing} e mapeamento de todos os endereços para o mesmo
+conjunto da \textit{cache}. Para obtenção de dados de cobertura, a arquitetura
+simulada foi configurada sem a inserção dos erros artificiais no sistema de
+memória.

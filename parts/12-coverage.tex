@@ -1,0 +1,63 @@
+\section{Comparação de cobertura estrutural}
+
+As~\Cref{coverage-minus,coverage-plus} comparam as coberturas obtidas com os
+quatro geradores adotados em função do número de processadores ($p$) e do
+tamanho do programa de teste, expresso em número de operações ($n$). Como a
+cobertura é uma propriedade dos geradores (e não dos \textit{checkers}), ela
+independe do Cenário. Por isso, as~\Cref{coverage-minus,coverage-plus}
+apresentam valores que valem tanto para o Cenário 1 quanto para o Cenário 2.
+
+\input{parts/coverage-minus}
+
+Na~\Cref{coverage-minus}, a maior cobertura estrutural foi alcançada com $p =
+32$ e $n = 4Ki$ tanto para PLAIN- quanto CHAIN-. De maneira geral, para $p =
+\text{8 e 16}$ a cobertura foi maior quando $n = 16Ki$ para ambos os geradores,
+salvo para $p = 8$ com CHAIN-. Comparando um gerador ao outro, PLAIN- conseguiu
+melhores resultados levando em conta que, além de atingir um valor máximo de
+cobertura maior que o de CHAIN-, alcançou uma cobertura maior em 9 dos 15 casos
+quando utilizados os mesmos valores para $p$ e $n$.  Ou seja, a aplicação
+apenas de \textit{Chaining} para este conjunto experimental não trouxe
+benefícios para a cobertura estrutural.
+
+\input{parts/coverage-plus}
+
+Na~\Cref{coverage-plus}, a maior cobertura estrutural foi alcançada com $p =
+32$ e $n = 16Ki$ para ambos PLAIN+ e CHAIN+. Neste conjunto de experimentos,
+foi benéfica a aplicação de \textit{Chaining}: CHAIN+ obteve melhores
+resultados para todos os valores de $p$ e $n$, ainda que ambos os geradores
+tenham alcançado uma cobertura muito próxima, com a máxima cobertura alcançada
+por CHAIN+ sendo apenas 0.5\% a mais que a de PLAIN+.  Essa proximidade, porém,
+sugere que a métrica de cobertura estrutural não é capaz de expor uma diferença
+significativa no aumento da cobertura pela aplicação conjunta de
+\textit{chaining} e \textit{biasing} em relação a aplicação de apenas
+\textit{biasing}, uma vez que em~\cite{Andrade:2019} é demonstrado que CHAIN+
+possui uma vantagem bastante significativa quando a comparação é feita pela
+cobertura funcional.
+
+De forma geral, as~\Cref{coverage-minus,coverage-plus} indicam que o aumento
+tanto no número de \textit{cores} quanto no tamanho dos programas de teste é
+capaz de aumentar a cobertura estrutural do gerador. Além disso, pelos
+resultados expostos, o maior impactante para a cobertura estrutural dentre as
+técnicas de geração foi o \textit{Biasing}, já que todos os valores de
+cobertura para PLAIN+ e CHAIN+ são maiores do que os de PLAIN- e \mbox{CHAIN-,}
+enquanto, conforme exposto anteriormente, apenas a aplicação de CHAIN- não foi
+suficientemente benéfica. Por exemplo, em comparação com o melhor caso de
+PLAIN- (48\%), o pior caso de PLAIN+ atingiu uma cobertura maior por uma razão
+de 18.1\% a mais, e o melhor caso de CHAIN+ a razão foi de 39.8\% a mais.
+
+% TODO: Descobrir o que era para completar este trecho:
+% A justificativa da terceira correlação (aplicação de \textit{biasing
+% constraints} para impor substituição de blocos) está no fato de que a
+% ausência de
+
+%       Possibilidades:
+% Ausência de biasing de alinhamento deixa para aleatoriedade acabar causando
+% replacement, enquanto que com biasing você consegue forçar o replacement e
+% portanto força a cache a se mexer.
+
+% TODO: Fazer análise em cima de transições dos níveis de cache.
+% TODO: Foi mencionado de mais cópias espalhadas pela hierarquia de memória, e
+%       portanto tem um grau maior de competitividade. Isso pode ser validado
+%       se o número de transições de invalidação e replacements também aumenta.
+%-------------------------------------------------------------------------------
+

@@ -1,0 +1,58 @@
+\section{Verificação pré-silício}
+
+% {Rambo:2012}
+Dos \textit{checkers} voltados à verificação pré-silício,~\cite{Rambo:2012}
+propõe um \textit{post-mortem} (ou seja: a análise dos \textit{traces} é
+feita após a execução dos programas de teste) que explora a observabilidade
+da representação executável subsistema de memória compartilhada, utilizando
+dois pontos de observação por núcleo --- um na saída da unidade de
+\textit{commit} do \textit{core} e outro na interface com sua
+\textit{cache} privativa --- escolhidos de forma a serem bastante
+independentes de arquitetura, aumentando a aplicabilidade da técnica. Os
+resultados expostos no artigo demonstraram que o aproveitamento da
+observabilidade possibilitou tanto \textit{speed-up} quanto a detecção de
+mais erros de projeto quando
+% TODO: Deveria deixar assim ou citar o artigo do TSOTool?
+% TODO: Confirmar se realmente o convencional é o TSOTool.
+comparado ao \textit{checker} convencional também descrito
+em~\cite{Rambo:2012}.
+
+% {Shacham:2008}
+Visando reduzir a complexidade para se criar modelos de
+memória,~\cite{Shacham:2008} propõe uma metodologia para o uso de
+\textit{Scoreboard} Relaxado com um \textit{overhead} aceitável para
+arquiteturas de até 32 \textit{cores}. Enquanto \textit{checkers} como o
+proposto em~\cite{Rambo:2012} são \textit{post-mortem} com verificação
+baseada em Grafos Direcionados Acíclicos, o \textit{Scoreboard} Relaxado se
+baseia em conjuntos de respostas possíveis para um dado momento do
+programa, fazendo a verificação enquanto este é executado
+(\textit{on-the-fly}).
+
+% {Freitas:2013}
+O \textit{checker} proposto em~\cite{Freitas:2013} explora ainda mais a
+observabilidade da verificação pré-silício utilizando três pontos de
+observação --- um na saída de \textit{commit} de cada processador, um na
+interface dos processadores com suas \textit{caches} privativas, e um no
+\textit{reorder buffer} --- com múltiplos \textit{Scoreboards} relaxados
+concorrentes. O uso desses três pontos, em contraste com apenas um no
+\textit{Scoreboard} de~\cite{Shacham:2008}, garante que o \textit{checker}
+não acuse falsos positivos nem falsos negativos, além de conseguir um
+\textit{speed-up} de até duas ordens de magnitude quando comparadas ao
+mesmo \textit{checker} convencional de~\cite{Rambo:2012}. Esses resultados
+demonstram que técnicas de verificação podem aproveitar da observabilidade
+do cenário pré-silício para ter garantias e melhorar o desempenho.
+
+Ainda no contexto de verificação pré-silício,~\cite{Andrade:2019} evidencia
+que melhorias podem ser feitas na geração de programas de teste quando a
+finalidade é auxiliar na exposição de erros de projeto, uma vez que o uso
+das duas técnicas propostas no artigo (\textit{Chaining} e
+\textit{Biasing}) foi capaz de reduzir o esforço para a exposição de erros
+de projeto na maioria dos projetos e tamanhos de programa utilizados como
+caso de teste, chegando a expor erros que não eram expostos sem o uso de
+ambas as técnicas. Ainda no mesmo conjunto de testes,~\cite{Andrade:2019}
+demonstra que é possível obter ganhos na cobertura funcional alcançada
+pelos programas gerados, especialmente nos níveis mais baixos da
+\textit{cache}.
+
+% TODO: Adicionar qual a contribuição desses artigos e o que eles tem
+% relacionado ao TCC.

@@ -1,0 +1,20 @@
+\section{Checkers}
+
+O \textit{checker} pré-silício utilizado foi o proposto em~\cite{Freitas:2013}.
+Nele, a análise dos \textit{traces} ocorre durante a execução dos programas de
+teste, isto é, \textit{on-the-fly}. Dessa forma, ao encontrar um erro, não é
+necessário que o programa continue sua execução. Esse \textit{checker} utiliza
+três pontos de observação: dois em cada \textit{core}, sendo um na saída da
+unidade de \textit{commit} e outro na interface com sua \textit{cache}
+privativa, e o terceiro no \textit{buffer} de reordenamento.
+
+O \textit{checker} pós-silício utilizado foi o XCHECK, proposto
+em~\cite{Hu:2012}. O XCHECK é baseado em \textit{software}, o que é justificado
+pelo fato de que soluções baseadas em \textit{hardware} envolvem garantir que
+haja suporte para verificação (como monitores em pontos mais específicos) no
+projeto a ser testado, e portanto insere maior complexidade e possivelmente
+perda de performance ou aumento da área ocupada pelo \textit{chip}. Sendo
+assim, o XCHECK não exige que haja suporte em \textit{hardware} dedicado para
+teste pós-silício do sistema \textit{multicore}. Por fim, ele é capaz de operar
+sem impor restrições no programa de teste para conseguir extrair determinadas
+informações temporais.

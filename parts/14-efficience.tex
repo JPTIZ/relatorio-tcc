@@ -1,0 +1,86 @@
+\section{Comparação de eficácia}
+
+As~\Cref{minus-plain-effect,plus-plain-effect,minus-chain-effect,plus-chain-effect}
+comparam, para os Cenários 1 e 2, os valores de eficácia obtidos com os quatro
+geradores adotados em função do número de operações ($n$). Nessas tabelas, uma
+entrada marcada em preto significa que o erro nunca foi encontrado por teste
+algum.
+
+\input{parts/minus-plain-effect}
+
+Na~\Cref{minus-plain-effect}, em ambos os cenários tanto F1 quanto f29 foram os
+mais difíceis de se expor, principalmente f29 que não foi exposto em qualquer
+um dos cenários. F2, F3 e F4, porém, foram detectados em todos os cenários,
+sendo F2 o de mais fácil exposição. Ao se passar do Cenário 1 para o Cenário 2,
+a eficácia de todos os erros é reduzida para todos os valores de $n$. A de F2,
+por exemplo, é reduzida cerca de 1/3 ao se trocar o cenário.
+
+\input{parts/minus-chain-effect}
+
+Na~\Cref{minus-chain-effect}, CHAIN- é capaz de expor F1 para todos os tamanhos
+de programa apenas no Cenário 1, mas não nos casos em que $n = 1Ki$ e $n = 4Ki$
+do Cenário 2. Assim como com PLAIN-, f29 não é exposto em nenhum dos valores de
+$n$ para ambos os cenários, o que resulta no aumento do esforço observado
+na~\Cref{both-minus-effort} ao se aumentar o tamanho do programa.  Ao se passar
+do Cenário 1 para o Cenário 2, também como em PLAIN-, a eficácia para todos os
+erros foi reduzida, com F1 não sendo exposto para dois valores de $n$.
+
+\input{parts/plus-plain-effect}
+
+Na~\Cref{plus-plain-effect}, F4 é o único garantidamente exposto (1.00 de
+eficácia) independentemente do Cenário e do valor de $n$, o que significa que
+programas de 1Ki são o suficiente para sua exposição. Levando em conta o
+Cenário 1 e a~\Cref{both-plus-effort}, apesar de PLAIN+ conseguir elevar a
+eficácia para alguns erros (F1, F2, F3, f29), em alguns casos o ganho não foi o
+suficiente para reduzir o esforço de verificação conforme se aumentou o tamanho
+dos programas de teste (F1, F3).
+
+\input{parts/plus-chain-effect}
+
+Na~\Cref{plus-chain-effect}, como na~\Cref{plus-plain-effect}, F4 foi o único
+garantidamente exposto independentemente do Cenário e do valor de $n$. A
+eficácia do Cenário 2 para os demais erros foi reduzida com relação ao Cenário
+1, com o valor mais impactante sendo o de f29 que, para $n = 1Ki$, sofreu uma
+perda de 77\% de eficácia, e para os demais valores de $n$ deixou de ser
+garantidamente exposto. Aumentando, porém, o tamanho dos programas, a eficácia
+para f29 aumentou por uma razão de 3.5, chegando próximo de 100\% de eficácia.
+Vale também notar que, conforme reportado pelos autores das técnicas
+\textit{Biasing} e \textit{Chaining}~\cite{Andrade:2019}, apenas o uso de
+\textit{Chaining} não foi o suficiente para trazer melhorias significativas,
+afinal o maior ganho de eficácia se deu no uso de ambas as técnicas
+simultaneamente (CHAIN+), com o maior impacto advindo da \textit{Biasing} (como
+pode ser observado comparando os resultados de PLAIN+ e CHAIN- com PLAIN-).
+
+O conjunto
+das~\Cref{minus-plain-effect,minus-chain-effect,plus-plain-effect,plus-chain-effect}
+indica que, por mais que um gerador seja capaz de elevar sua eficácia na
+exposição de um erro de projeto, a observabilidade ainda é um limitante, vide a
+degradação média de 57\% na eficácia para os casos mais impactantes (destacados
+nas tabelas anteriores) para vários erros de projeto (F1, F2, F4, f29) ao se
+passar do Cenário 1 para o Cenário 2.  O único erro de projeto em que esse
+efeito não pôde ser observado foi F3, que teve maior eficácia no Cenário 2
+quando aplicado \textit{Biasing}.  Apesar disso, para programas de $n = 16Ki$,
+CHAIN+ --- que teve, no geral, a maior eficácia dentre os geradores ---
+manteve, no Cenário 2, valores de eficácia próximos do Cenário 1 e
+significativamente maiores que os de PLAIN- --- que, ao contrário de CHAIN+,
+teve erros que não foi capaz de expor ---, o que indica que a aplicação
+combinada de \textit{Biasing} e \textit{Chaining} é capaz de compensar o
+impacto da troca de Cenário, e logo a imposição de restrições nos programas de
+teste podem ser benéficas para ambos os Cenários. Isso também indica, ainda,
+que é possível explorar meios independentes do Cenário ou \textit{checker}
+(como é o caso dos geradores) a fim de melhorar a eficácia e reduzir o impacto
+de limitações na observabilidade.
+
+%%-------------------------------------------------------------------------------
+%% For LC
+%\review{%
+%Essa diferença nos resultados quanto à presença de \textit{biasing constraint}
+%tem relação com a probabilidade de um bloco ser substituído na \textit{cache}:
+%como nas técnicas PLAIN+ e CHAIN+ o \textit{true sharing} é imposto, há maior
+%estímulo das transições de sicronização. Além disso, o aumento no tamanho do
+%programa de teste acaba por possibilitar a geração de
+%}
+%
+%% TODO: Criar tabela (baseada na Tabela 4) com separação entre número de cores
+%%       para F4.
+%%-------------------------------------------------------------------------------

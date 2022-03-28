@@ -1,0 +1,51 @@
+\section{Objetivo e Escopo}
+
+Três ferramentas principais são necessárias para viabilizar a
+\textbf{verificação pré-silício} do subsistema de memória compartilhada:
+
+\begin{itemize}
+    \item Um \textbf{simulador} (que represente o comportamento do sistema de
+        memória sob projeto);
+    \item Um \textbf{\textit{checker}} (capaz de indicar um comportamento
+        incorreto e parar o simulador assim que um erro é detectado); e
+    \item Um \textbf{gerador} automático de programas de teste (capaz de
+        fornecer estímulos capazes de induzir no sistema os comportamentos
+        esperados).
+\end{itemize}
+
+Como a observabilidade de uma representação do projeto é limitada, eventos de
+leitura e escrita podem ser monitorados em diferentes pontos no domínio de cada
+núcleo (múltiplos monitores por núcleo), o que tende a aumentar a eficácia e a
+eficiência na detecção de erros de projeto.
+
+Embora o \textbf{teste pós-silício} do subsistema de memória também use um
+\textbf{gerador} automático, ele requer a execução de teste diretamente num
+\textbf{protótipo} do \textit{multicore chip}. Como a observabilidade de um
+\textit{chip} é limitada, durante a execução de um teste, monitora-se a
+interface de cada núcleo com a memória para capturar eventos de leitura e
+escrita (um único monitor no domínio de cada núcleo). A sequência de eventos
+monitorados ao longo do tempo em cada núcleo é denominada de \textit{trace}.
+Terminada a execução de um teste, os \textit{traces} monitorados em cada um dos
+núcleos são disponibilizados para um \textbf{\textit{checker}} que analisa se
+as sequências de eventos satisfazem o comportamento esperado do sistema.
+Entretanto, a observabilidade limitada do \textit{chip} tende a comprometer a
+cobertura, a eficácia e a eficiência na detecção de erros.
+
+Esta monografia avalia o \textbf{impacto da observabilidade} na eficácia e na
+eficiência de geradores exporem erros de projeto, tendo como maior contribuição
+a comparação entre os resultados experimentais obtidos com os \textit{checkers}
+MSB~\cite{Freitas:2013} e XCHECK~\cite{Hu:2012}, descritos no~\Cref{chp:tools}
+deste trabalho, quando os programas de teste são gerados com o uso das técnicas
+\textit{Chaining} e \textit{Biasing}~\cite{Andrade:2019}. Para isso, os
+programas de teste sintetizados por um gerador são aplicados a dois cenários
+distintos:
+
+\begin{itemize}
+    \item Cenário múltiplos monitores por núcleo; e
+    \item Cenário um único monitor por núcleo.
+\end{itemize}
+
+Como o primeiro cenário é típico da verificação pré-silício e o segundo é
+típico do teste pós-silício, a avaliação aqui proposta deve fornecer uma
+estimativa da viabilidade de uso de geradores que foram originalmente
+desenvolvidos para o primeiro cenário se fossem usados no segundo cenário.

@@ -1,0 +1,42 @@
+\section{Teste pós-silício}
+
+Algumas das técnicas de verificação podem ser utilizadas na fase pré-silício
+também podem ser aplicadas à fase de teste pós-silício. Como exemplo,
+na~\Cref{tbl:freitas-table-i}, reproduzida a partir da Tabela I
+de~\cite{Freitas:2013}, são descritos 6 \textit{checkers} com tal
+característica, todos \textit{post-mortem} baseados em grafos direcionados
+acíclicos que representam, por exemplo, eventos relacionados à ordem de
+programa. Dentre eles, a ferramenta XCHECK~\cite{Hu:2012} foi capaz de reduzir
+o custo computacional com relação a outros \textit{checkers} no estado da arte
+de sua publicação. Contudo, a técnica nela aplicada, que se baseia em fazer
+contínuas verificações por ciclos no grafo formado com os eventos de acesso à
+memória, depende do uso de \textit{backtracking}, o que limita a escalabilidade
+da ferramenta ao criar uma relação de custo exponencial com relação ao número
+de processadores no sistema sob verificação, ainda que mantendo custo linear
+com relação ao número de operações de memória. Conforme informado por seus
+autores, porém, tal limitação não foi observada quando o número de
+processadores no sistema projetado é menor ou igual a 16.
+
+\begin{table}
+    \tiny
+    \centering
+    \makebox[\linewidth]{%
+        \hspace{4em}
+        \begin{tabular}{c c c c c c c c}
+            \toprule
+            Autor & Ano & Uso & Tipo & Baseado em & Garantias & Monitores & \makecell{Complexidade \\ (pior caso)} \\
+            \midrule
+            Hangal et al. & 2004 & (Pré-) Pós-silício & Post-mortem & Inferência baseada em DAG~\footnote{\textit{Directed Acyclic Graph} --- Grafo Acíclico Direcionado} & --- & 1 & $O(n^5)$ \\
+            Manovit et al. & 2005 & (Pré-) Pós-silício & Post-mortem & Inferência baseada em DAG & --- & 1 & $O(pn^3)$ \\
+            Manovit et al. & 2006 & (Pré-) Pós-silício & Post-mortem & Inferência baseada em DAG & Completas & 1 & $O({(n/p)}^{p}pn^3)$ \\
+            Roy et al. & 2006 & (Pré-) Pós-silício & Post-mortem & Inferência baseada em DAG & --- & 1 & $O(n^4)$ \\
+            Chen et al. & 2009 & (Pré-) Pós-silício & Post-mortem & Inferência baseada em DAG & Completas & 1 & \makecell{$O(p^{3}n)$ \\ $O(p^2n^2)$} \\
+            Hu et al. & 2012 & (Pré-) Pós-silício & Post-mortem & Inferência baseada em DAG & Completas & 1 & $O(p^3n)$ \\
+            Shacham et al. & 2008 & Pré-silício & \textit{On-the-fly} & Um único \textit{Scoreboard} relaxado & --- & 1 & $O(p^2n^2)$ \\
+            Rambo et al. & 2012 & Pré-silício & Post-mortem & Correspondência de grafo bipartido & Completas & 2 & $O(n^6/p^5)$ \\
+            Freitas et al. & 2013 & Pré-silício & \textit{On-the-fly} & \textit{Scoreboards} concorrentes relaxados & Completas & 3 & $O(n^2/p)$ \\
+            \bottomrule
+        \end{tabular}
+    }
+    \caption{Reprodução (adaptada) da tabela de trabalhos correlatos em~\cite{Freitas:2013}.\label{tbl:freitas-table-i}}
+\end{table}

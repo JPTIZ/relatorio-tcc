@@ -1,0 +1,44 @@
+\section{Motivação e Contexto}
+
+Depois de ter provocado uma mudança radical na abordagem de como projetar
+microprocessadores para PCs e servidores, o multi-processamento em
+\textit{chip}, ou \textit{Chip Multi-Processing (CMP)}, levou ao atual quadro
+onde \textit{chips} com 8 ou mais \textit{cores} são bastante comuns. Prevê-se
+o uso de \textit{chips} com dezenas a centenas de \textit{cores} e a sobrevida
+da abstração de memória compartilhada como condição para viabilizar a
+programação de propósitos gerais~\cite{Devadas:2013}. Isso resulta no desafio
+de como manter coerência de memória compartilhada \textbf{quando se aumenta a
+escala do número de \textit{cores} em um único \textit{chip}}. Para suprir a
+abstração de memória compartilhada coerente, o subsistema de memória torna-se
+mais sofisticado e, portanto, mais suscetível a erros de projeto com o aumento
+massivo do número de \textit{cores}. Além disso, como se espera que grande
+parte dos programas paralelos utilize bibliotecas para sincronização, a maioria
+dos programadores não precisa se preocupar com as regras de
+consistência~\cite{Adve:1996} do modelo de memória~\cite{Hennessy:2011}, o que
+tende a popularizar o uso de \textbf{modelos com máxima relaxação da ordem de
+programa} para aumentar o desempenho sem comprometer a programabilidade. Isso
+também contribui para aumentar a complexidade do hardware.
+
+Portanto, a dificuldade de se validar sistemas computacionais baseados em CMP
+tende a aumentar dramaticamente a cada nova geração de produtos a serem
+lançados. Ora, \textbf{a validação da coerência e da consistência do subsistema
+de memória compartilhada}, o qual inclui múltiplos níveis de \textit{cache} e
+protocolos complexos, constitui grande parte do esforço de se validar um
+sistema computacional baseado em CMP~\cite{Wagner:2008}. Como o número de
+estados induzidos por um protocolo de coerência cresce exponencialmente com o
+aumento do número de \textit{cores}~\cite{Shim:2013}, torna-se bastante
+desafiador o problema de verificar se o projeto de um chip baseado em múltiplos
+\textit{cores} em larga escala implementa corretamente o comportamento esperado
+para o subsistema de memória compartilhada.
+
+As primeiras técnicas de validação do sistema de memória foram propostas para
+serem aplicadas após a fabricação (\textbf{teste} pós-silício), através da
+execução de longos programas de testes aleatórios no próprio hardware do
+protótipo. No entanto, o simples reuso dessas técnicas é inadequado em tempo de
+projeto (para \textbf{verificação} pré-silício), porque seriam demasiadamente
+lentas quando os programas de teste são executados em simuladores, o que requer
+a limitação do tamanho do teste, restringindo assim a qualidade da verificação.
+Por isso, as técnicas de verificação têm se mostrado frequentemente incapazes
+de encontrar erros sutis de projeto, que acabam passando para o hardware.
+% TODO: Como é possível afirmar ("tem se mostrado frequentemente
+% incapazes...")?

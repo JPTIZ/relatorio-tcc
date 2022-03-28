@@ -1,0 +1,35 @@
+\section{Métricas}
+
+Foram utilizadas três métricas para avaliar as técnicas de verificação
+enunciadas nos diferentes cenários:
+
+\begin{description}
+    \item[Cobertura estrutural:] A razão entre número de transições da máquina
+        de estados do controlador de cada \textit{cache} que foram efetivamente
+        cobertas pelo teste e o número total de transições dessa mesma máquina;
+
+    \item[Eficácia:] A razão entre o número de execuções de programas de teste
+        em que um determinado erro de projeto foi exposto e o número total de
+        execuções de programas de teste no sistema com tal erro, servindo para
+        estimar a probabilidade de exposição de um erro para um determinado
+        conjunto de parâmetros de execução;
+
+    \item[Esforço:] O tempo necessário (em média) para que um determinado erro
+        de projeto seja exposto. Diz-se que um erro foi \textbf{exposto} em um
+        determinado cenário quando o \textit{checker} utilizado no cenário é
+        capaz de detectar a respectiva violação do modelo de memória. A
+        equação~\ref{effort-eq}, retirada de~\cite{Andrade:2017}, descreve a
+        medida de esforço ($EF$), em que $T$ representa o conjunto de programas
+        de teste gerados por um gerador $G$ (e portanto $|T|$ representa o
+        número de testes executados), $\epsilon$ representa a eficácia de $G$
+        para o conjunto $T$ e $\hat{t}$ a média do tempo de execução dos
+        testes.
+\end{description}
+
+\begin{equation}
+    \label{effort-eq}
+    EF_G = \begin{cases}
+               \hat{t}/\epsilon, & \mbox{se } \epsilon \neq 0\\
+               |T|.\hat{t},      & \mbox{se } \epsilon = 0
+           \end{cases}
+\end{equation}
