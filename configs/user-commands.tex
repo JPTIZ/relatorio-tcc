@@ -1,0 +1,40 @@
+%----------------------------------------------------------------------
+% Comandos criados pelo usuário
+%----------------------------------------------------------------------
+\renewcommand{\bf}[1]{\textbf{#1}}
+\newcommand{\review}[1]{{\color{green!65!black}{#1}}}
+\newcommand{\remove}[1]{{\sout{#1}}}
+\newcommand{\newcontent}[1]{{\color{blue}{#1}}}
+\newcommand{\tolc}[1]{{\color{red}{#1}}}
+\newcommand{\todo}[1]{\textbf{\textit{\color{red}{#1}}}}
+\newcommand{\critical}[1]{{\color{red}\textbf{{#1}}}}
+\newcommand{\verycritical}[1]{{\color{red}\textbf{\uppercase{{#1}}}}}
+
+\newcommand{\blue}[1]{{\color{blue}{#1}}}
+\newcommand{\green}[1]{{\color{green!65!black}{#1}}}
+
+\newenvironment{todolist}
+{%
+    \begin{itemize}
+        \color{red}
+}{%
+    \end{itemize}
+}
+
+\definecolor{shadecolor}{rgb}{0.8,0.8,0.8}
+\newcommand\VRule[1][\arrayrulewidth]{\vrule width #1}
+
+\newcommand{\shadecell}{{\cellcolor{shadecolor}}}
+
+\usepackage[
+    a5paper,
+    inner=2.5cm,
+    outer=1.5cm,
+    top=2.0cm,
+    bottom=1.5cm,
+    head=0.7cm,
+    foot=0.7cm
+]{geometry}
+\renewcommand{\normalsize}{\small}
+
+\newcommand{\notfound}{\cellcolor{black}\color{white}}

@@ -1,0 +1,73 @@
+\usepackage[alf]{abntex2cite}
+
+%----------------------------------------------------------------------
+% Pacotes usados especificamente neste documento
+\usepackage[printonlyused, withpage]{acronym}
+\usepackage{adjustbox}
+\usepackage{afterpage}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage[brazilian]{cleveref}
+\usepackage{colortbl}
+\usepackage{color}
+\usepackage{enumitem}
+\usepackage{footnote}
+\usepackage{framed}
+\usepackage{graphicx}
+\usepackage{hhline}
+\usepackage{latexsym}
+\usepackage{listings}
+\usepackage{makecell}
+\usepackage{mathtools}
+\usepackage{multirow}
+\usepackage{pdfpages}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage[normalem]{ulem}
+\usepackage[lined,boxed,ruled,commentsnumbered,portuguese]{algorithm2e}
+
+\makesavenoteenv{tabular}
+\makesavenoteenv{table}
+
+\usepackage{fontspec}
+\setmainfont{times.ttf}[
+    BoldFont = timesbd.ttf,
+    ItalicFont = timesi.ttf,
+    BoldItalicFont = timesbi.ttf
+]
+
+\usepackage{tikz}
+\usetikzlibrary{decorations.pathreplacing}
+\usepackage{standalone}
+
+\newcommand{\specialcell}[2][c]{%
+    \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}
+}
+
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+
+%------------------------------------------------------------------------------
+% Configurações do UFSC-Thesis para TCC
+\renewcommand{\imprimircapa}{%
+    \begin{capa}%
+        \center%
+        {\ABNTEXchapterfont\large\MakeUppercase{\imprimirinstituicao}\\
+        \ABNTEXchapterfont\large\MakeUppercase{\imprimircentro}}
+
+        \vspace*{1cm}
+
+        {{\normalfont\large\imprimirautor}}
+
+        \vspace*{4cm}
+        \begin{center}
+            \ABNTEXchapterfont\bfseries\large\MakeUppercase{\imprimirtitulo}
+        \end{center}
+        \vfill
+
+        \large\imprimirlocal\\
+        \large\the\year%
+        \vspace*{1cm}
+    \end{capa}
+}
