@@ -1,0 +1,66 @@
+\chapter{Construção da Ferramenta~\label{chp:construção-da-ferramenta}}
+
+\section{Organização geral}
+
+\begin{todolist}
+    \item Explicar a construção da ferramenta como CLI, biblioteca e como
+          aplicação Web;
+    \item Diagramar módulos;
+\end{todolist}
+
+\section{Estratégias de extração}
+
+\subsection{Estratégia inicial: extração HTML}
+
+\begin{todolist}
+    \item Descrever a situação inicial das páginas do TJ-RJ;
+    \item Ressaltar dificuldades com páginas diferentes, fornecendo links para
+          exemplos --- para fins de reprodutibilidade, o link será uma cópia
+          para um .html salvo no repositório do código da ferramenta, na pasta
+          de ``samples'' (amostras);
+    \item Explicar como Scrapy foi utilizado.
+\end{todolist}
+
+\subsection{Estratégia alternativa: varredura com API JSON}
+
+\begin{todolist}
+    \item Expor sobre a existência de múltiplos sub-domínios do TJ-RJ;
+    \item Complementar com a falta de documentação da API do TJ-RJ (forma de
+          operação descoberta na base de tentativa e erro);
+    \item Explicar rapidamente sobre a filtragem dos campos;
+\end{todolist}
+
+\section{Estratégias de aceleração de consulta}
+
+\todo{%
+    Para cada estratégia, nomeá-la para referenciar na parte de resultados
+    demonstrando os ganhos de aceleração. Nesta seção, não tomar conclusões
+    sobre ganhos, apenas enunciar e explicar como as estratégias funcionam e
+    por que elas foram decididas dessa forma.
+}
+
+\todo{%
+    Na seção de resultados, comparar um cenário base (sem aplicar as estratégias) com:
+}
+\begin{todolist}
+    \item Apenas uma das estratégias aplicadas (fazer para cada estratégia);
+    \item Com todas as estratégias aplicadas.
+\end{todolist}
+\todo{%
+    A hipótese lançada é de que o maior tempo desprendido é com IO (e não
+    processamento das requisições).
+    A conclusão deverá confirmar essa hipótese demonstrando que com a redução
+    (através de caching e através de requisições assíncronas) do gasto com IO o
+    tempo de consulta se reduz de forma diretamente proporcional.
+}
+
+\subsection{Requisições assíncronas}
+
+\subsection{\textit{Cache} dos resultados}
+
+\begin{todolist}
+    \item Justificar a necessidade de \textit{cache} para os resultados: em
+          resumo, requisições, sejam de um mesmo usuário ou de usuários
+          diferentes, podem muito bem conter uma intersecção dos processos que
+          serão buscados.
+\end{todolist}
