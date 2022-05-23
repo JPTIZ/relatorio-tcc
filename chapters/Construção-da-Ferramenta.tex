@@ -8,6 +8,25 @@
     \item Diagramar módulos;
 \end{todolist}
 
+A ferramenta, nomeada \textit{\textbf{tjscraper}}, foi projetada como uma
+biblioteca de \textit{software} com duas interfaces de usuário~\footnote{Neste
+ponto, ``usuário'' refere-se a alguém que não esteja a ferramenta como uma
+biblioteca de código, e sim como aplicação.}: uma aplicação de Interface de
+Linha de Comando (\textit{ILC}\footnote{Comumente referenciado com a sigla em
+inglês ``CLI'', de ``Command Line Interface''.} e uma aplicação de servidor
+Web.
+
+A ILC tem como objetivo permitir o uso de boa parte dos diferentes recursos da
+biblioteca em um terminal para a execução tarefas pontuais, como exibir
+informações sobre estado atual da \textit{cache}, iniciar um processo de
+extração, ou mesmo iniciar uma instância de servidor Web da ferramenta para
+fins de desenvolvimento.
+
+O servidor Web é destinado ao usuário que queira uma interface de simples aceso
+e uso da ferramenta, primariamente focando na obtenção de dados dos TJs com os
+recursos que não estejam disponíveis nas páginas oficiais dos TJs (descritos
+na~\todo{Referenciar Seção})
+
 \section{Estratégias de extração}
 
 \subsection{Estratégia inicial: extração HTML}

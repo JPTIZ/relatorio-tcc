@@ -1,8 +1,7 @@
-\usepackage[alf]{abntex2cite}
+\usepackage[tcc]{ufsc-thesis-a4}
 
 %----------------------------------------------------------------------
 % Pacotes usados especificamente neste documento
-\usepackage[printonlyused, withpage]{acronym}
 \usepackage{adjustbox}
 \usepackage{afterpage}
 \usepackage{amsmath}
@@ -21,6 +20,7 @@
 \usepackage{listings}
 \usepackage{makecell}
 \usepackage{mathtools}
+\usepackage{marginnote}
 \usepackage{multirow}
 \usepackage{pdfpages}
 \usepackage{tabularx}
@@ -28,15 +28,13 @@
 \usepackage[normalem]{ulem}
 \usepackage[lined,boxed,ruled,commentsnumbered,portuguese]{algorithm2e}
 
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+% \usepackage{mathptmx}
+
 \makesavenoteenv{tabular}
 \makesavenoteenv{table}
 
-\usepackage{fontspec}
-\setmainfont{times.ttf}[
-    BoldFont = timesbd.ttf,
-    ItalicFont = timesi.ttf,
-    BoldItalicFont = timesbi.ttf
-]
 
 \usepackage{tikz}
 \usetikzlibrary{decorations.pathreplacing}
@@ -50,24 +48,3 @@
 
 %------------------------------------------------------------------------------
 % Configurações do UFSC-Thesis para TCC
-\renewcommand{\imprimircapa}{%
-    \begin{capa}%
-        \center%
-        {\ABNTEXchapterfont\large\MakeUppercase{\imprimirinstituicao}\\
-        \ABNTEXchapterfont\large\MakeUppercase{\imprimircentro}}
-
-        \vspace*{1cm}
-
-        {{\normalfont\large\imprimirautor}}
-
-        \vspace*{4cm}
-        \begin{center}
-            \ABNTEXchapterfont\bfseries\large\MakeUppercase{\imprimirtitulo}
-        \end{center}
-        \vfill
-
-        \large\imprimirlocal\\
-        \large\the\year%
-        \vspace*{1cm}
-    \end{capa}
-}
