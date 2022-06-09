@@ -1,5 +1,35 @@
 \chapter{Construção da Ferramenta~\label{chp:construção-da-ferramenta}}
 
+A ferramenta construída neste trabalho, nomeada \textit{\textbf{tjscraper}},
+foi produzida para ser capaz de extrair com qualidade
+satisfatória~\todo{(Definir ``qualidade satisfatória'' --- em resumo: um
+formato que dê de usar os dados para alguma coisa e que não seja ``grego'' para
+alguém que não seja da área)} os dados especificamente do TJ do Rio de Janeiro
+(TJ-RJ). As estratégias empregadas, portanto, levam em conta acessos que todos
+os acessos serão ao TJ-RJ, ainda que visando a possibilidade de serem aplicadas
+às páginas dos TJs dos demais estados.
+
+\section{Ferramentas utilizadas~\label{section:ferramentas-utilizadas}}
+
+\textcolor{blue}{--->> O que estás propondo para descrição de ferramentas
+(Scrapy e SQLLite) será um pequeno parágrafo de uma Seção chamada "Ferramentas
+utilizadas" no capítulo de construção da ferramenta. Não vais descrever nenhuma
+delas com detalhes, pois são ferramentas simplesmente usadas para contruíres
+teu trabalho. Isso não se detalha porque não são "conceitos". Ferramentas mudam
+de versão, saem de linha, ficam obsoletas, perdem valor, etc, portanto, não se
+descrevem em detalhes.}
+
+\todo{%
+    Esta seção deve ser uma descrição das ferramentas mais relevantes que foram
+    \textit{utilizadas} no trabalho, i.e. as dependências (bibliotecas,
+    linguagem de programação).
+}
+\begin{todolist}
+    \item Scrapy
+    \item SQLite
+    \item \ldots
+\end{todolist}
+
 \section{Organização geral}
 
 \begin{todolist}
@@ -8,13 +38,12 @@
     \item Diagramar módulos;
 \end{todolist}
 
-A ferramenta, nomeada \textit{\textbf{tjscraper}}, foi projetada como uma
-biblioteca de \textit{software} com duas interfaces de usuário~\footnote{Neste
-ponto, ``usuário'' refere-se a alguém que não esteja a ferramenta como uma
-biblioteca de código, e sim como aplicação.}: uma aplicação de Interface de
-Linha de Comando (\textit{ILC}\footnote{Comumente referenciado com a sigla em
-inglês ``CLI'', de ``Command Line Interface''.} e uma aplicação de servidor
-Web.
+A ferramenta foi projetada como uma biblioteca de \textit{software} acompanhada
+de duas interfaces de usuário~\footnote{Neste ponto, ``usuário'' refere-se a
+alguém que não esteja utilizando a ferramenta como uma biblioteca de código, e
+sim como aplicação.}: uma aplicação de Interface de Linha de Comando
+(\textit{ILC}\footnote{Comumente referenciado com a sigla em inglês ``CLI'', de
+``Command Line Interface''.} e uma aplicação de servidor Web.
 
 A ILC tem como objetivo permitir o uso de boa parte dos diferentes recursos da
 biblioteca em um terminal para a execução tarefas pontuais, como exibir
@@ -22,16 +51,30 @@ informações sobre estado atual da \textit{cache}, iniciar um processo de
 extração, ou mesmo iniciar uma instância de servidor Web da ferramenta para
 fins de desenvolvimento.
 
-O servidor Web é destinado ao usuário que queira uma interface de simples aceso
-e uso da ferramenta, primariamente focando na obtenção de dados dos TJs com os
-recursos que não estejam disponíveis nas páginas oficiais dos TJs (descritos
-na~\todo{Referenciar Seção})
+O servidor Web é destinado ao usuário que queira uma interface de simples
+acesso e uso da ferramenta, primariamente focando na obtenção de dados dos TJs
+com os recursos que não estejam disponíveis nas páginas oficiais dos TJs
+(descritos na~\todo{Referenciar Seção}), tendo em mente como público alvo
+jornalistas.
 
 \section{Estratégias de extração}
+
+O TJ-RJ possui rotas e subdomínios que dão acesso aos mesmos dados por vias
+diferentes. Delas, foram elaboradas estratégias para extrair dados da rota que
+os fornece em formato HTML~\footnote{\todo{link da rota HTML}}, conhecida antes
+da produção efetiva da ferramenta, e da que os fornece em formato
+JSON~\footnote{\todo{link da rota JSON}}, encontrada durante o processo de
+produção e portanto implementada posteriormente. O formato HTML é apresentado
+como uma página de consulta para um usuário comum, enquanto o formato JSON é
+um conjunto de rotas que implementam uma API Web.
+
+A extração, em todos os casos, leva em conta a busca pelo número do processo.
+\todo{(descrever mais)}
 
 \subsection{Estratégia inicial: extração HTML}
 
 \begin{todolist}
+    \item Iniciar descrevendo como um usuário comum faz uma busca por número do processo.
     \item Descrever a situação inicial das páginas do TJ-RJ;
     \item Ressaltar dificuldades com páginas diferentes, fornecendo links para
           exemplos --- para fins de reprodutibilidade, o link será uma cópia
@@ -40,9 +83,22 @@ na~\todo{Referenciar Seção})
     \item Explicar como Scrapy foi utilizado.
 \end{todolist}
 
+\begin{minted}[autogobble]{html}
+    <tr>
+      <td class="info" valign="top" nowrap="nowrap">Assunto:</td>
+      <td valign="top">
+        Crimes de Tortura (Art. 1º - Lei 9.455/97) E
+Prevaricação (Art. 319 e 319-A - CP) E Usurpação de função pública
+(Art. 328 - CP)
+      </td>
+    </tr>
+\end{minted}
+
 \subsection{Estratégia alternativa: varredura com API JSON}
 
 \begin{todolist}
+    \item Iniciar descrevendo a relação entre parâmetros de busca da busca HTML
+          e as rotas como \texttt{/por-numero/}.
     \item Expor sobre a existência de múltiplos sub-domínios do TJ-RJ;
     \item Complementar com a falta de documentação da API do TJ-RJ (forma de
           operação descoberta na base de tentativa e erro);
