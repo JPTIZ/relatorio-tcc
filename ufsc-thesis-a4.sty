@@ -64,7 +64,7 @@
 % ---
 % Pacotes de citações
 % ---
-\RequirePackage[backend=biber,style=abnt,repeatfields,maxbibnames=9,maxcitenames=3,uniquelist=false, uniquename=full]{biblatex}
+\RequirePackage[backend=biber,style=abnt,repeatfields,maxbibnames=9,maxcitenames=3,uniquelist=false,uniquename=full]{biblatex}
 \RequirePackage{url}
 % Ajusta espaçamento entre referências
 \setlength\bibitemsep{\baselineskip}
@@ -417,8 +417,10 @@
 			%\SingleSpacing
 			{\footnotesize
 				\begin{SingleSpace}
-					\imprimirpreambulo\newline%
-					\imprimirorientadorRotulo:~\imprimirorientador\newline%
+					\imprimirpreambulo%
+
+					\imprimirorientadorRotulo:~\imprimirorientador%
+
 					\abntex@ifnotempty{\imprimircoorientador}{\imprimircoorientadorRotulo:~\imprimircoorientador}%
 				\end{SingleSpace}%
 			}

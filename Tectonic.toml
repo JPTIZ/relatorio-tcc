@@ -1,0 +1,12 @@
+[doc]
+name = "Extração de dados processuais dos Tribunais de Justiça para auxílio ao Jornalismo Investigativo (título provisório)"
+bundle = "https://relay.fullyjustified.net/default_bundle_v32.tar"
+
+[[output]]
+name = "report-tcc"
+type = "pdf"
+preamble = ""
+index = "report-tcc-1.tex"
+postamble = ""
+# postamble = "configs/postamble.tex"
+shell_escape = true
