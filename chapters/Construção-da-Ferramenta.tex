@@ -69,7 +69,17 @@ como uma página de consulta para um usuário comum, enquanto o formato JSON é
 um conjunto de rotas que implementam uma API Web.
 
 A extração, em todos os casos, leva em conta a busca pelo número do processo.
-\todo{(descrever mais)}
+Foi escolhido esse campo de busca por conta do domínio de valores válidos ser
+limitado e conhecido: números de processos são dados seguindo os formatos
+numéricos fixos unificado e antigo, respectivamente
+``NNNNNNN-NN.AAAA.N.NN.NNNN'' e ``AAAA.NNN.NNNNNN-N'' em que ``AAAA'' é o ano
+de criação do documento do processo e cada ``N'' é um dígito de 0 a 9, logo é
+possível encontrar todos os processos apenas fixando o ano e testando
+diferentes combinações para os demais dígitos. Outros campos, como nome das
+partes por exemplo, possuem uma abrangência de valores muito grande e difícil
+de se conhecer em sua totalidade ou, nos casos como a busca por Sentença, não
+são capazes de, mesmo exauridas todas as combinações de valores de entrada, dar
+acesso a todos os processos registrados.
 
 \subsection{Estratégia inicial: extração HTML}
 
@@ -82,6 +92,17 @@ A extração, em todos os casos, leva em conta a busca pelo número do processo.
           de ``samples'' (amostras);
     \item Explicar como Scrapy foi utilizado.
 \end{todolist}
+
+Para extração das rotas do TJ-Rj que fornecem seu conteúdo no formato HTML, a
+estratégia é semelhante a reproduzir o acesso de um usuário comum ao efetuar
+uma busca.
+
+\review{A rota de Consultas Processuais
+unificada~\footnote{\url{http://www4.tjrj.jus.br/ConsultaUnificada/consulta.do}}
+exibe uma página que permite a busca por processos por ambos os tipos de
+numeração.}
+
+% :)
 
 \begin{minted}[autogobble]{html}
     <tr>
