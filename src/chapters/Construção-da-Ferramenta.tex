@@ -93,16 +93,26 @@ acesso a todos os processos registrados.
     \item Explicar como Scrapy foi utilizado.
 \end{todolist}
 
-Para extração das rotas do TJ-Rj que fornecem seu conteúdo no formato HTML, a
-estratégia é semelhante a reproduzir o acesso de um usuário comum ao efetuar
-uma busca.
-
-\review{A rota de Consultas Processuais
+\review{Para extração das rotas do TJ-RJ que fornecem seu conteúdo no formato
+HTML, a estratégia é semelhante a reproduzir o acesso de um usuário comum ao
+efetuar uma busca. A rota de Consultas Processuais
 unificada~\footnote{\url{http://www4.tjrj.jus.br/ConsultaUnificada/consulta.do}}
 exibe uma página que permite a busca por processos por ambos os tipos de
 numeração.}
 
-% :)
+Uma página de resultado da consulta pública do subdomínio ww4 do
+TJ-RJ~\footnote{\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?v=2&numProcesso=2021.004.015548-9&FLAGNOME=S&tipoConsulta=publica&back=1&PORTAL=1&v=2}}
+está exibida na~\cref{fig:exemplo-pagina-ww4}. O HTML dos campos é organizado
+em uma \textit{tag} \texttt{<table>}, de forma que cada linha visual
+corresponde a uma \textit{tag} \texttt{tr}.
+
+\begin{figure}[H]
+    \includegraphics{img/exemplo-resultado-consulta-publica-1.png}
+    \caption{%
+        Página de resultado da consulta pública para o processo de nº
+        2022.003.015548-9.\label{fig:exemplo-pagina-ww4}
+    }
+\end{figure}
 
 \begin{minted}[autogobble]{html}
     <tr>
