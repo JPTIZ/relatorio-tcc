@@ -5,8 +5,7 @@ bundle = "https://relay.fullyjustified.net/default_bundle_v32.tar"
 [[output]]
 name = "report-tcc"
 type = "pdf"
-preamble = ""
+preamble = "preamble.tex"
 index = "report-tcc-1.tex"
-postamble = ""
-# postamble = "configs/postamble.tex"
+postamble = "postamble.tex"
 shell_escape = true
