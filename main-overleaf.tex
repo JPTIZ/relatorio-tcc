@@ -1,4 +1,8 @@
 % Documento principal, apenas para compilação no Overleaf (sem Tectonic)
-\input{src/preamble.tex}
-\input{src/report-tcc-1.tex}
-\input{src/postamble.tex}
+\makeatletter
+\def\input@path{{src/}}
+\makeatother
+
+\input{preamble.tex}
+\input{report-tcc-1.tex}
+\input{postamble.tex}
