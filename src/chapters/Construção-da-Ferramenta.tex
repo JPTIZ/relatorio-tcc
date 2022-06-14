@@ -102,28 +102,35 @@ numeração.}
 
 Uma página de resultado da consulta pública do subdomínio ww4 do
 TJ-RJ~\footnote{\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?v=2&numProcesso=2021.004.015548-9&FLAGNOME=S&tipoConsulta=publica&back=1&PORTAL=1&v=2}}
-está exibida na~\cref{fig:exemplo-pagina-ww4}. O HTML dos campos é organizado
+está exibida na~\Cref{fig:exemplo-pagina-ww4}. O HTML dos campos é organizado
 em uma \textit{tag} \texttt{<table>}, de forma que cada linha visual
-corresponde a uma \textit{tag} \texttt{tr}.
+corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
+\texttt{td}: uma para o nome do campo e outra para o valor. O trecho de código
+na~\Cref{cod:html-assunto}.
 
 \begin{figure}[H]
+    \centering{}
     \includegraphics{img/exemplo-resultado-consulta-publica-1.png}
     \caption{%
-        Página de resultado da consulta pública para o processo de nº
+        Página de resultado da consulta pública para o processo de número
         2022.003.015548-9.\label{fig:exemplo-pagina-ww4}
     }
 \end{figure}
 
-\begin{minted}[autogobble]{html}
-    <tr>
-      <td class="info" valign="top" nowrap="nowrap">Assunto:</td>
-      <td valign="top">
-        Crimes de Tortura (Art. 1º - Lei 9.455/97) E
-Prevaricação (Art. 319 e 319-A - CP) E Usurpação de função pública
-(Art. 328 - CP)
-      </td>
-    </tr>
-\end{minted}
+\begin{listing}
+    \centering{}
+    \begin{minted}[autogobble]{html}
+        <tr>
+          <td class="info" valign="top" nowrap="nowrap">Assunto:</td>
+          <td valign="top">
+            Crimes de Tortura (Art. 1º - Lei 9.455/97) E
+    Prevaricação (Art. 319 e 319-A - CP) E Usurpação de função pública
+    (Art. 328 - CP)
+          </td>
+        </tr>
+    \end{minted}
+    \caption{Código HTML do campo ``Assunto:'' presente na~\cref{fig:exemplo-pagina-ww4}.\label{cod:html-assunto}}
+\end{listing}
 
 \subsection{Estratégia alternativa: varredura com API JSON}
 
