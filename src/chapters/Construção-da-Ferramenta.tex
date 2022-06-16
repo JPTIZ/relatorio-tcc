@@ -101,25 +101,50 @@ exibe uma página que permite a busca por processos por ambos os tipos de
 numeração.}
 
 Os resultados de consulta processual do TJ-RJ em HTML são os das requisições
-feitas ao subdomínio \url{ww4.tjrj.jus.br}. A estratégia de extração para
-requisições a ele é aproveitar que a identificação de qual processo está sendo
-visualizado pode ser feita através do parâmetro de URL \texttt{numProcesso},
-cujo valor é o número do processo na numeração antiga, efetuando requisições
-para a mesma URL variando apenas esse parâmetro com um número de processo. Cada
-requisição pode retornar uma página de processo válido,
-inexistente~\footnote{Exemplo de URL de processo inexistente:
-\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?v=2&numProcesso=2020.004.015548-9&FLAGNOME=S&tipoConsulta=publica&back=1&PORTAL=1&v=2}},
-de numeração inválida ou de Captcha (caso esteja fora do horário
-noturno~\footnote{\todo{Definir horário noturno em alguma seção anterior.}}).
+feitas ao subdomínio \url{ww4.tjrj.jus.br}. A estratégia de extração dos
+processos que ele disponibiliza é aproveitar que a identificação de qual
+processo está sendo visualizado pode ser feita através do parâmetro de URL
+\texttt{numProcesso}, cujo valor é o número do processo na numeração antiga,
+efetuando requisições para a mesma URL variando apenas esse parâmetro com um
+número de processo. Cada requisição pode retornar uma página de processo
+válido, inexistente~\footnote{Exemplo de URL de processo inexistente:
+\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2020.004.015548-9}},
+de numeração inválida~\footnote{Exemplo de URL de processo inválido:
+\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaMov.do?numProcesso=0}}
+ou de Captcha (caso esteja fora do horário noturno~\footnote{\todo{Definir
+horário noturno em alguma seção anterior.}}).
 
-Uma página de resultado da consulta pública do subdomínio ww4 do
-TJ-RJ para um número de processo
-válido~\footnote{\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?v=2&numProcesso=2021.004.015548-9&FLAGNOME=S&tipoConsulta=publica&back=1&PORTAL=1&v=2}}
-está exibida na~\Cref{fig:exemplo-pagina-ww4}. O HTML dos campos é organizado
-em uma \textit{tag} \texttt{<table>}, de forma que cada linha visual
+\newcommand{\urlProcValido}{\url{%
+    http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
+}}
+
+Uma página de resultado da consulta pública do subdomínio ww4 do TJ-RJ para um
+número de processo válido~\footnote{\urlProcValido}
+(\Cref{fig:exemplo-pagina-ww4}) apresenta os campos dos dados do processo em
+uma \textit{tag} HTML \texttt{<table>}, de forma que cada linha visual
 corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
-\texttt{td}: uma para o nome do campo e outra para o valor. O trecho de código
-para o campo ``Assunto'' está replicado na~\Cref{cod:html-assunto}.
+\texttt{td}: uma para o nome do campo e outra para o valor
+(\Cref{cod:html-assunto}). Assim, um campo ``A'' pode ser encontrado procurando
+por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho
+considerando hierarquia do DOM da página. A expressão XPath que representa esse
+padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
+(\Cref{cod:extract_field}), em que a execução dessa expressão é dada como:
+
+\begin{enumerate}
+    \item \texttt{//}: Define que o item buscado pode estar em qualquer ponto
+        do documento. Uma busca genérica dessa forma evita que pequenas
+        variações na hierarquia DOM da página prejudiquem a busca.
+    \item \texttt{td[text()='TEXTO:']}: Busca e seleciona um item da
+        \textit{tag} \texttt{<td>} que tenha como conteúdo exatamente a
+        \textit{string} ``TEXTO:''.
+    \item \texttt{/following-sibling::td}: Se foi encontrado o item, então
+        será seleciona o próximo vizinho de mesmo nível hierárquico que seja da
+        \textit{tag} \texttt{<td>}.
+    \item \texttt{/text()}: Desse item vizinho, captura-se o conteúdo dele
+        como \textit{string}. Por ser o último item do XPath, então esse será o
+        valor retornado pela busca.
+\end{enumerate}
+
 
 \begin{figure}[H]
     \centering{}
@@ -146,9 +171,20 @@ para o campo ``Assunto'' está replicado na~\Cref{cod:html-assunto}.
 
 A extração da informação de um campo é dada então \todo{:shrug:}
 
-\begin{minted}{python}
-    subject_xpath = "//td[text()='Assunto:']/following-sibling::td/text()"
-\end{minted}
+\begin{listing}[htb]
+    \centering{}
+    \begin{minted}[breaklines]{python}
+        def extract_field(response: Response, field_text: str) -> str:
+            field_xpath = f"//td[text()='{field_text}:']/following-sibling::td/text()"
+            content = response.xpath(field_xpath).get().strip()
+            return content
+    \end{minted}
+    \caption{%
+        Código da função responsável pela extração de um campo em uma resposta
+        de uma requisição a uma página de visualização de processo.
+    }
+    \label{cod:extract_field}
+\end{listing}
 
 \subsection{Estratégia alternativa: varredura com API JSON}
 
