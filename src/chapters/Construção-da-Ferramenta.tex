@@ -2,7 +2,7 @@
 
 A ferramenta construída neste trabalho, nomeada \textit{\textbf{tjscraper}},
 foi produzida para ser capaz de extrair com qualidade
-satisfatória~\todofootnote{(Definir ``qualidade satisfatória'' --- em resumo:
+satisfatória~\todofootnote{}{(Definir ``qualidade satisfatória'' --- em resumo:
 um formato que dê de usar os dados para alguma coisa e que não seja ``grego''
 para alguém que não seja da área)} os dados especificamente do TJ do Rio de
 Janeiro (TJ-RJ). As estratégias empregadas, portanto, levam em conta acessos
@@ -59,27 +59,62 @@ jornalistas.
 
 \section{Estratégias de extração}
 
-O TJ-RJ possui rotas e subdomínios que dão acesso aos mesmos dados por vias
-diferentes. Delas, foram elaboradas estratégias para extrair dados da rota que
-os fornece em formato HTML~\footnote{\todo{link da rota HTML}}, conhecida antes
-da produção efetiva da ferramenta, e da que os fornece em formato
-JSON~\footnote{\todo{link da rota JSON}}, encontrada durante o processo de
-produção e portanto implementada posteriormente. O formato HTML é apresentado
-como uma página de consulta para um usuário comum, enquanto o formato JSON é
-um conjunto de rotas que implementam uma API Web.
+O TJ-RJ possui rotas e subdomínios que dão acesso aos mesmos dados por formatos
+de apresentação diferentes. Foram elaboradas estratégias para extrair dados da
+rota que os fornece em formato HTML~\todofootnote{}{link da rota HTML},
+conhecida antes da produção efetiva da ferramenta, e da que os fornece em
+formato JSON~\todofootnote{}{link da rota JSON}, encontrada durante o processo
+de produção e portanto implementada posteriormente. O formato HTML é
+apresentado como uma página de consulta para um usuário comum, enquanto o
+formato JSON é um conjunto de rotas que implementam uma API Web.
 
-A extração, em todos os casos, leva em conta a busca pelo número do processo.
-Foi escolhido esse campo de busca por conta do domínio de valores válidos ser
-limitado e conhecido: números de processos são dados seguindo os formatos
-numéricos fixos unificado e antigo, respectivamente
+Para a produção desta ferramenta não foi encontrada uma forma de se obter todos
+os processos de maneira direta. A extratégia, então, foi exaurir as
+possibilidades de valores de entrada de algum dos tipos de busca disponíveis
+nos portais do TJ-RJ. Analisando as dificuldades existentes em cada um dos
+tipos (\Cref{tbl:dificuldades-tipos-de-busca}), foi escolhido o campo de busca
+por número do processo por conta do domínio de valores válidos ser limitado e
+conhecido: números de processos são dados seguindo os formatos numéricos fixos
+\textbf{unificado} e \textbf{antigo}, respectivamente
 ``NNNNNNN-NN.AAAA.N.NN.NNNN'' e ``AAAA.NNN.NNNNNN-N'' em que ``AAAA'' é o ano
 de criação do documento do processo e cada ``N'' é um dígito de 0 a 9, logo é
 possível encontrar todos os processos apenas fixando o ano e testando
-diferentes combinações para os demais dígitos. Outros campos, como nome das
-partes por exemplo, possuem uma abrangência de valores muito grande e difícil
-de se conhecer em sua totalidade ou, nos casos como a busca por Sentença, não
-são capazes de, mesmo exauridas todas as combinações de valores de entrada, dar
-acesso a todos os processos registrados.
+diferentes combinações para os demais dígitos.
+
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{lp{0.65\textwidth}}
+        \toprule
+        Tipo de busca & Dificuldades \\
+        \midrule
+        Por Número & Número alto de combinações possíveis ($10^{13}$ para numeração unificada ou $9 \times 10^{8}$ para numeração antiga). \\
+        Por Nome & Inviável. Demanda conhecer todos os nomes existentes em processos. \\
+        Por OAB & Sem garantia de cobertura completa. \\
+        Por Nome do Advogado & Inviável. Demanda conhecer todos os nomes existentes em processos. \\
+        Por CPF / CNPJ & Número alto de combinações possíveis (em um sequenciamento ingenuo, $10^{11}$ para CPF e $10^{14}$ para CNPJ). \\
+        Por Protocolo & Sem garantia de cobertura completa. \\
+        Por Sentença & Sem garantia de cobertura completa. \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Dificuldades encontradas para se exaurir as possibilidades de valores
+        de entrada para cada um dos campos de busca permitidos pelo TJ-RJ.
+    }
+    \label{tbl:dificuldades-tipos-de-busca}
+\end{table}
+
+\todo{%
+    Sobre o formato numérico antigo: trocar para o \textbf{unificado} no
+    código, pois o antigo varia conforme vara/etc.
+}
+
+\review{Outros campos, como nome das partes por exemplo, possuem uma
+abrangência de valores muito grande e difícil de se conhecer em sua totalidade
+ou, nos casos como a busca por Sentença, não são capazes de, mesmo exauridas
+todas as combinações de valores de entrada, dar acesso a todos os processos
+registrados.}
+
+\review{A numeração dos processos não é sequencial}
 
 \subsection{Estratégia inicial: extração HTML}
 
@@ -111,8 +146,36 @@ válido, inexistente~\footnote{Exemplo de URL de processo inexistente:
 \url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2020.004.015548-9}},
 de numeração inválida~\footnote{Exemplo de URL de processo inválido:
 \url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaMov.do?numProcesso=0}}
-ou de Captcha (caso esteja fora do horário noturno~\footnote{\todo{Definir
-horário noturno em alguma seção anterior.}}).
+ou de Captcha (caso esteja fora do horário noturno~\todofootnote{}{Definir
+horário noturno em alguma seção anterior.}).
+
+Por não se tratar de um formato de descrição de dados (contrastando com JSON),
+a extração de páginas HTML demanda o uso de ferramentas especializadas que
+permitam a definição de padrões de como localizar dos campos desejados e
+separar seus respectivos valores. Por resolver essa demanda com recursos que
+visam facilitar tarefas comuns em raspagem de dados, foi escolhida a biblioteca
+Scrapy~\cite{lib:scrapy}. Assim, os passos da extração foram determinados como:
+
+\begin{enumerate}
+    \item Dado um intervalo de números de processos (no formato unificado ou
+        antigo), as URLs correspondentes a cada um dos valores nele são
+        montadas e repassadas para uma \textit{spider} do Scrapy;
+    \item Cada URL passada irá eventualmente, em alguma ordem, chamar o método
+        \texttt{parse} da \textit{spider}, e nele é extraído o conteúdo de uma
+        página seguindo os passos~\label{step-1}:
+
+        \begin{enumerate}
+            \item Identificar se a página é de um processo inválido,
+                inexistente ou se há a exigência de preenchimento de um
+                textit{captcha}.
+            \item Caso seja um processo válido, buscam-se na página os campos
+                desejados utilizando
+        \end{enumerate}
+\end{enumerate}
+
+Para os passos do~\cref{step-1}, utilizou-se a especificação~\cite{spec:xpath}
+suportada nativamente pelo Scrapy para a busca dos padrões de resultado e de
+campos desejados no HTML da página.
 
 \newcommand{\urlProcValido}{\url{%
     http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
@@ -125,23 +188,25 @@ uma \textit{tag} HTML \texttt{<table>}, de forma que cada linha visual
 corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
 \texttt{td}: uma para o nome do campo e outra para o valor
 (\Cref{cod:html-assunto}). Assim, um campo ``A'' pode ser encontrado procurando
-por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho
-considerando hierarquia do DOM da página. A expressão XPath que representa esse
+por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho em
+relação à hierarquia do HTML da página. A expressão XPath que representa esse
 padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
-(\Cref{cod:extract_field}), em que a execução dessa expressão é dada como:
+(\Cref{cod:extract_field}), responsável pela extração de um campo arbitrário em
+uma resposta contendo uma página HTML. A execução da busca por XPath por
+expressão pode ser explicada como:
 
 \begin{enumerate}
     \item \texttt{//}: Define que o item buscado pode estar em qualquer ponto
         do documento. Uma busca genérica dessa forma evita que pequenas
-        variações na hierarquia DOM da página prejudiquem a busca.
+        variações na hierarquia HTML da página prejudiquem a busca.
     \item \texttt{td[text()='TEXTO:']}: Busca e seleciona um item da
         \textit{tag} \texttt{<td>} que tenha como conteúdo exatamente a
         \textit{string} ``TEXTO:''.
-    \item \texttt{/following-sibling::td}: Se foi encontrado o item, então
-        será seleciona o próximo vizinho de mesmo nível hierárquico que seja da
+    \item \texttt{/following-sibling::td}: Se foi encontrado o item, então será
+        seleciona o próximo vizinho de mesmo nível hierárquico que seja da
         \textit{tag} \texttt{<td>}.
-    \item \texttt{/text()}: Desse item vizinho, captura-se o conteúdo dele
-        como \textit{string}. Por ser o último item do XPath, então esse será o
+    \item \texttt{/text()}: Desse item vizinho, captura-se o conteúdo dele como
+        \textit{string}. Por ser o último item do XPath, então esse será o
         valor retornado pela busca.
 \end{enumerate}
 
@@ -196,6 +261,29 @@ A extração da informação de um campo é dada então \todo{:shrug:}
           operação descoberta na base de tentativa e erro);
     \item Explicar rapidamente sobre a filtragem dos campos;
 \end{todolist}
+
+\begin{table}
+    \tiny
+    \begin{tabular}{p{0.72\textwidth}l}
+        \toprule
+        Resposta (JSON) & Ação da cache \\
+        \midrule
+        \mintinline{json}{["O processo informado não foi encontrado."]} & Salvo como \texttt{INVALID}. \\
+        \mintinline{json}{["Número do processo inválido."]} & Salvo como \texttt{INVALID} \\
+        \begin{minipage}[t]{0.8\textwidth}
+            \begin{minted}[autogobble,breaklines]{json}
+{"status": 412, "mensagem": "Erro de validação do Recaptcha. Tente novamente."}
+            \end{minted}
+        \end{minipage}
+        & Processo não é salvo na Cache \\
+        \bottomrule
+    \end{tabular}
+    \caption{
+        Relação entre resposta JSON recebida pelo servidor do TJ-RJ e como ela
+        é interpretada internamente pela ferramenta.
+    }
+    \label{tbl:interpretação-json}
+\end{table}
 
 \section{Estratégias de aceleração de consulta}
 
