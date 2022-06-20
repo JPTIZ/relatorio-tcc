@@ -33,8 +33,6 @@ descrevem em detalhes.}
 \section{Organização geral}
 
 \begin{todolist}
-    \item Explicar a construção da ferramenta como CLI, biblioteca e como
-          aplicação Web;
     \item Diagramar módulos;
 \end{todolist}
 
@@ -69,14 +67,14 @@ apresentado como uma página de consulta para um usuário comum, enquanto o
 formato JSON é um conjunto de rotas que implementam uma API Web.
 
 Para a produção desta ferramenta não foi encontrada uma forma de se obter todos
-os processos de maneira direta. A extratégia, então, foi exaurir as
+os processos de maneira direta. A estratégia, então, foi exaurir as
 possibilidades de valores de entrada de algum dos tipos de busca disponíveis
 nos portais do TJ-RJ. Analisando as dificuldades existentes em cada um dos
 tipos (\Cref{tbl:dificuldades-tipos-de-busca}), foi escolhido o campo de busca
 por número do processo por conta do domínio de valores válidos ser limitado e
 conhecido: números de processos são dados seguindo os formatos numéricos fixos
 \textbf{unificado} e \textbf{antigo}, respectivamente
-``NNNNNNN-NN.AAAA.N.NN.NNNN'' e ``AAAA.NNN.NNNNNN-N'' em que ``AAAA'' é o ano
+``NNNNNNN-NN.AAAA.8.19.NNNN'' e ``AAAA.NNN.NNNNNN-N'' em que ``AAAA'' é o ano
 de criação do documento do processo e cada ``N'' é um dígito de 0 a 9, logo é
 possível encontrar todos os processos apenas fixando o ano e testando
 diferentes combinações para os demais dígitos.
@@ -87,7 +85,7 @@ diferentes combinações para os demais dígitos.
         \toprule
         Tipo de busca & Dificuldades \\
         \midrule
-        Por Número & Número alto de combinações possíveis ($10^{13}$ para numeração unificada ou $9 \times 10^{8}$ para numeração antiga). \\
+        Por Número & Número alto de combinações possíveis (para cada ano, $10^{13}$ para numeração unificada ou $9 \times 10^{10}$ para numeração antiga). \\
         Por Nome & Inviável. Demanda conhecer todos os nomes existentes em processos. \\
         Por OAB & Sem garantia de cobertura completa. \\
         Por Nome do Advogado & Inviável. Demanda conhecer todos os nomes existentes em processos. \\
@@ -119,13 +117,10 @@ registrados.}
 \subsection{Estratégia inicial: extração HTML}
 
 \begin{todolist}
-    \item Iniciar descrevendo como um usuário comum faz uma busca por número do processo.
-    \item Descrever a situação inicial das páginas do TJ-RJ;
     \item Ressaltar dificuldades com páginas diferentes, fornecendo links para
           exemplos --- para fins de reprodutibilidade, o link será uma cópia
           para um .html salvo no repositório do código da ferramenta, na pasta
           de ``samples'' (amostras);
-    \item Explicar como Scrapy foi utilizado.
 \end{todolist}
 
 \review{Para extração das rotas do TJ-RJ que fornecem seu conteúdo no formato
@@ -177,6 +172,8 @@ Para os passos do~\cref{step-1}, utilizou-se a especificação~\cite{spec:xpath}
 suportada nativamente pelo Scrapy para a busca dos padrões de resultado e de
 campos desejados no HTML da página.
 
+\todo{Especificar XPath para páginas de erro.}
+
 \newcommand{\urlProcValido}{\url{%
     http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
 }}
@@ -191,9 +188,8 @@ corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
 por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho em
 relação à hierarquia do HTML da página. A expressão XPath que representa esse
 padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
-(\Cref{cod:extract_field}), responsável pela extração de um campo arbitrário em
-uma resposta contendo uma página HTML. A execução da busca por XPath por
-expressão pode ser explicada como:
+(\Cref{cod:extract_field}), que extrai o valor de um campo arbitrário em uma
+resposta contendo uma página HTML conforme a seguinte ideia:
 
 \begin{enumerate}
     \item \texttt{//}: Define que o item buscado pode estar em qualquer ponto
@@ -216,9 +212,9 @@ expressão pode ser explicada como:
     \includegraphics{img/exemplo-resultado-consulta-publica-1.png}
     \caption{%
         Página de resultado da consulta pública para o processo válido de
-        número 2021.003.015548-9 (numeração
-        antiga).\label{fig:exemplo-pagina-ww4}
+        número 2021.003.015548-9 (numeração antiga).
     }
+    \label{fig:exemplo-pagina-ww4}
 \end{figure}
 
 \begin{listing}
@@ -231,18 +227,16 @@ expressão pode ser explicada como:
           </td>
         </tr>
     \end{minted}
-    \caption{Código HTML do campo ``Assunto:'' presente na~\Cref{fig:exemplo-pagina-ww4}.\label{cod:html-assunto}}
+    \caption{Código HTML do campo ``Assunto:'' presente na~\Cref{fig:exemplo-pagina-ww4}.}
+    \label{cod:html-assunto}
 \end{listing}
-
-A extração da informação de um campo é dada então \todo{:shrug:}
 
 \begin{listing}[htb]
     \centering{}
     \begin{minted}[breaklines]{python}
         def extract_field(response: Response, field_text: str) -> str:
             field_xpath = f"//td[text()='{field_text}:']/following-sibling::td/text()"
-            content = response.xpath(field_xpath).get().strip()
-            return content
+            return response.xpath(field_xpath).get().strip()
     \end{minted}
     \caption{%
         Código da função responsável pela extração de um campo em uma resposta
@@ -250,6 +244,12 @@ A extração da informação de um campo é dada então \todo{:shrug:}
     }
     \label{cod:extract_field}
 \end{listing}
+
+A extração de todos os campos desejados compõe os dados de um processo, que
+então é exportado como uma linha adicional em um arquivo no
+formato~\cite{spec:jsonlines}. Ao final de uma varredura por um intervalo de
+número de processos, o arquivo contém os dados de todos os processos processos
+dele.
 
 \subsection{Estratégia alternativa: varredura com API JSON}
 
@@ -262,30 +262,96 @@ A extração da informação de um campo é dada então \todo{:shrug:}
     \item Explicar rapidamente sobre a filtragem dos campos;
 \end{todolist}
 
-\begin{table}
+\urldef\urlConsultaJson\url{https://www3.tjrj.jus.br/consultaprocessual/#%2Fconsultapublica%23porNumero=}
+
+No subdomínio \url{ww3.tjrj.jus.br}, há uma página de
+busca~\footnote{\urlConsultaJson} semelhante à oferecida no subdomínio
+\url{ww4.tjrj.jus.br}, também fornecendo os dados em HTML. Porém, em vez de o
+servidor responder com o HTML pronto para o lado cliente renderizar, neste
+subdomínio o cliente envia uma requisição AJAX para o uma API do
+servidor~\footnote{\url{https://www3.tjrj.jus.br/consultaprocessual/api/processos/por-numero/publica}}
+que responde com um objeto JSON e então o HTML é atualizado no lado cliente de
+forma dinâmica. A estratégia então nesse caso passa a ser trivial: a partir do
+número de um processo, enviar uma requisição para a tal API e, com os dados de
+um processo em JSON, basta investigar quais os campos retornados, filtrar os de
+interesse e exportar para o arquivo~\cite{spec:jsonlines}.
+
+Por não ter sido encontrada uma documentação oficial, o funcionamento e
+respostas dadas pela API foram descobertos a partir de tentativa e erro. A API
+responde com dados de um processo através de requisições POST utilizando
+\textit{query strings} para especificar os parâmetros de busca, cujos tipos de
+resultados encontrados durante a construção desta ferramenta estão expostos
+na~\Cref{tbl:respostas-ww3}.
+
+\begin{table}[htb]
     \tiny
-    \begin{tabular}{p{0.72\textwidth}l}
+    \centering
+    \begin{tabular}{lp{0.6\textwidth}}
         \toprule
-        Resposta (JSON) & Ação da cache \\
+        \textit{Query String} & Resposta (JSON) \\
         \midrule
-        \mintinline{json}{["O processo informado não foi encontrado."]} & Salvo como \texttt{INVALID}. \\
-        \mintinline{json}{["Número do processo inválido."]} & Salvo como \texttt{INVALID} \\
-        \begin{minipage}[t]{0.8\textwidth}
+        \texttt{tipoProcesso=1\&codigoProcesso=0} & \mintinline{json}{["O processo informado não foi encontrado."]} \\
+        \texttt{tipoProcesso=1\&codigoProcesso=abc} & \mintinline{json}{["Número do processo inválido."]} \\
+        \texttt{tipoProcesso=1\&codigoProcesso=2021.001.140006-4} & \mintinline{json}{{"codProc": "2021.001.140006-4", [...]}} \\
+        Qualquer (em período noturno) & \begin{minipage}{0.6\textwidth}
             \begin{minted}[autogobble,breaklines]{json}
 {"status": 412, "mensagem": "Erro de validação do Recaptcha. Tente novamente."}
             \end{minted}
         \end{minipage}
-        & Processo não é salvo na Cache \\
+        \\
         \bottomrule
     \end{tabular}
-    \caption{
-        Relação entre resposta JSON recebida pelo servidor do TJ-RJ e como ela
-        é interpretada internamente pela ferramenta.
+    \caption{%
+        Respostas dadas pela API do \url{ww3.tjrj.jus.br} conforme diferentes valores na \textit{query string}.
     }
-    \label{tbl:interpretação-json}
+    \label{tbl:respostas-ww3}
 \end{table}
 
+A resposta em formato JSON para busca por número, em caso de um número válido
+de um processo existente, é um único objeto em que cada campo é uma chave do
+objeto. Essas chaves são pré-definidas e algumas opcionais, então para a
+extração dos campos desejados basta uma consulta simples a elas no objeto
+conforme a relação exposta na~\Cref{tbl:relação-chaves-campos-json}.
+
+\begin{table}[htb]
+    \tiny
+    \centering
+    \begin{tabular}{llp{0.5\textwidth}}
+        \toprule
+        Campo desejado & Chave no objeto JSON & Valor de exemplo \\
+        \midrule
+        Assunto & \texttt{"txtAssunto"} & \texttt{"Furto  (Art. 155 - CP)"} \\
+        Número do Processo (Num. Antiga) & \texttt{"codProc"} & \texttt{"2021.001.140006-4"} \\
+        Número do Processo (Num. Unificada) & \texttt{"codCnj"} & \texttt{"0158400-75.2021.8.19.0001"} \\
+        Data de distribuição & \texttt{"dataDis"} & \texttt{"14/07/2021"} \\
+        Unidade Federativa (UF) & \texttt{"uf"} & \texttt{"RJ"} \\
+        Advogados (Nome, Número da OAB, ) & \texttt{"advogados"} & \texttt{[\{"nomeAdv": "DEFENSOR PÚBLICO", "numOab": "0"\}, ...]} \\
+        Cidade & \texttt{"cidade"} & \texttt{"Rio de Janeiro"} \\
+        Personagens (Autor, ...) & \texttt{"personagens"} & \texttt{[\{"codPers": "29760922", "nome": "MINISTERIO PUBLICO DO ESTADO DO RIO DE JANEIRO", "codTipPers": "1", "descPers": "Autor", "tipoPolo": "A"\}, ...]} \\
+        Última Movimentação do Processo & \texttt{"ultMovimentoProc"} & \texttt{\{"dtAlt": "01/01/2021", "descrMov": "Exemplo", "dtMovimento": "01/01/2021", "dt": ""\}} \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Relação entre campos desejados e qual a sua chave correspondente no
+        objeto JSON retornado pela API de consulta pública do
+        \url{ww3.tjrj.jus.br}.
+    }
+    \label{tbl:relação-chaves-campos-json}
+\end{table}
+
+\todo{%
+    Em algum ponto, esclarecer que as duas estratégias foram mantidas pois,
+    apesar do TJ-Rj possuir uma API JSON, outros TJs podem não ter, então a
+    implementação existente pode ser útil.
+}
+
 \section{Estratégias de aceleração de consulta}
+
+Partindo do uso da numeração dos processos como chave para descobrir todos os
+processos de um intervalo, para se exaurir todas as $10^{13}$ possibilidades da
+numeração unificada em menos de, por exemplo, 30 dias, o tempo médio de
+consulta por processo deve ser no máximo $???$. Sendo assim, é importante visar
+formas de otimizar a consulta para atingir essa meta.
 
 \todo{%
     Para cada estratégia, nomeá-la para referenciar na parte de resultados
@@ -311,6 +377,15 @@ A extração da informação de um campo é dada então \todo{:shrug:}
 
 \subsection{Requisições assíncronas}
 
+A maior parte do tempo desprendido na busca por processos é o tempo de IO
+(\todo{\Cref{gra:tempo-io-vs-proc}}), especialmente na espera pela resposta do
+servidor. Sendo assim, esta estratégia é então aproveitar o recurso de
+programação assíncrona nativo de Python (Corrotinas), disparando blocos de
+requisições e processando as respostas conforme o servidor respondê-las. O
+tamanho adequado de bloco escolhido como padrão foi de 100 processos.
+Resultados de ganhos para diferentes tamanhos de bloco estão expostos
+no~\todo{\Cref{gra:tempos-tamanhos-de-bloco-async}}.
+
 \subsection{\textit{Cache} dos resultados}
 
 \begin{todolist}
@@ -318,4 +393,55 @@ A extração da informação de um campo é dada então \todo{:shrug:}
           resumo, requisições, sejam de um mesmo usuário ou de usuários
           diferentes, podem muito bem conter uma intersecção dos processos que
           serão buscados.
+    \item Adicionar gráfico comparando o uso da cache para a mesma consulta com
+          quando ela é feita com e sem caching.
 \end{todolist}
+
+Dado o tempo para realizar uma busca por todos os processos, é inviável que ela
+seja feita para cada consulta realizada na ferramenta. A solução foi criar um
+banco de dados para funcionar como uma \textit{cache} para os processos já
+conhecidos. A \textit{cache} acaba sendo útil também para requisições a
+intervalos de processos com intersecções, visto que os processos conhecidos não
+precisarão ser re-buscados por requisições ao servidor do TJ-RJ, estando já
+prontos localmente (do ponto de vista de onde a ferramenta está rodando).
+
+A \textit{cache} foi implementada como um instância de banco de
+dados~\cite{tool:sqlite} com uma única tabela ``Processos''
+(\Cref{tbl:estrutura-tabela-processos}), com a descrição dos valores possíveis
+para a coluna \textit{``state''} descritos na~\Cref{tbl:valores-coluna-state}.
+
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{lll}
+        \toprule
+        \multicolumn{3}{c}{Processos} \\
+        \midrule
+        Coluna & Tipo & Descrição \\
+        \midrule \\
+        *\texttt{id} & text & \\
+        \texttt{cache\_state} & text & \\
+        \texttt{assunto} & text & \\
+        \texttt{json} & text & \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
+        ``*'' indica que o campo é uma chave primária.
+    }
+    \label{tbl:estrutura-tabela-processos}
+\end{table}
+
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{ll}
+        \toprule
+        Estado & Descrição \\
+        \midrule \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
+        ``*'' indica que o campo é uma chave primária.
+    }
+    \label{tbl:estrutura-tabela-processos}
+\end{table}
