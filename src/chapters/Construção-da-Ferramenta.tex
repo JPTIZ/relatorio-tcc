@@ -316,7 +316,7 @@ conforme a relação exposta na~\Cref{tbl:relação-chaves-campos-json}.
 \begin{table}[htb]
     \tiny
     \centering
-    \begin{tabular}{llp{0.5\textwidth}}
+    \begin{tabular}{llp{0.4\textwidth}}
         \toprule
         Campo desejado & Chave no objeto JSON & Valor de exemplo \\
         \midrule
@@ -380,11 +380,89 @@ formas de otimizar a consulta para atingir essa meta.
 A maior parte do tempo desprendido na busca por processos é o tempo de IO
 (\todo{\Cref{gra:tempo-io-vs-proc}}), especialmente na espera pela resposta do
 servidor. Sendo assim, esta estratégia é então aproveitar o recurso de
-programação assíncrona nativo de Python (Corrotinas), disparando blocos de
-requisições e processando as respostas conforme o servidor respondê-las. O
-tamanho adequado de bloco escolhido como padrão foi de 100 processos.
-Resultados de ganhos para diferentes tamanhos de bloco estão expostos
-no~\todo{\Cref{gra:tempos-tamanhos-de-bloco-async}}.
+programação assíncrona nativo de Python 3.5+ baseado em Corrotinas com
+\texttt{async/await}, disparando passos (sequências de tamanho fíxo) de
+múltiplas requisições e processando as respostas conforme o servidor
+respondê-las. O tamanho adequado de passo escolhido como padrão foi de
+\todofootnote{100 processos}{Escolher valor melhor quando forem apresentados os
+resultados}. Resultados de ganhos para diferentes tamanhos de passo estão
+expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
+(\Cref{chp:Resultados-Experimentais}).
+
+\begin{figure}[htb]
+    \caption{Comparação do tempo desprendido por IO e por processamento restrito à CPU.}
+    \label{gra:tempo-io-vs-proc}
+\end{figure}
+
+Para melhor visualização da implementação,
+as~\Cref{lst:requisição-processos-síncrona,lst:requisição-processos-assíncrona}
+reproduzem, abstraindo algumas das operações para focar na questão de
+programação assíncrona, o procedimento de busca por processos respectivamente
+de forma síncrona e assíncrona.
+
+\begin{listing}[htb]
+    \begin{minted}[autogobble,breaklines]{python}
+        def fetch_process(
+            url: str,
+            id_: str,
+            filter_function: FilterFunction = lambda _: True,
+        ) -> dict[str, Any]:
+            """
+            Busca um único processo com o número dado em `id_` utilizando a API
+            em `url`.
+            """
+
+            response = requests.post(url, json={"numProcesso": id_})
+
+            return classify_process(response.json(), filter_function)
+
+        def fetch_processes(
+            url: str,
+            ids: list[str],
+            sink: Path,  # Onde os processos serão salvos
+        ) -> int:
+            for id_ in ids:
+                save_process(fetch_process(id), sink)
+    \end{minted}
+    \caption{%
+        Reprodução do procedimento de busca por processos de maneira sequencial
+        (síncrona).
+    }
+    \label{lst:requisição-processos-síncrona}
+\end{listing}
+
+\begin{listing}[htb]
+    \begin{minted}[autogobble,breaklines]{python}
+        async def fetch_process(
+            session: aiohttp.ClientSession,
+            url: str,
+            id_: str,
+            filter_function: FilterFunction = lambda _: True,
+        ) -> dict[str, Any]:
+            """
+            Busca um único processo com o número dado em `id_` utilizando a API
+            em `url`.
+            """
+
+            response = requests.post(url, json={"numProcesso": id_})
+
+            return classify_process(response.json(), filter_function)
+
+        async def fetch_processes(
+            url: str,
+            ids: list[str],  % TODO: COMPLETAR!!!
+            sink: Path,  # Onde os processos serão salvos
+        ) -> int:
+            for id_ in ids:
+                save_process(fetch_process(id), sink)
+    \end{minted}
+    \caption{%
+        Reprodução do procedimento de busca por processos de maneira
+        concorrente não-bloqueante (assíncrona).
+    }
+    \label{lst:requisição-processos-assíncrona}
+\end{listing}
+
 
 \subsection{\textit{Cache} dos resultados}
 
@@ -399,8 +477,8 @@ no~\todo{\Cref{gra:tempos-tamanhos-de-bloco-async}}.
 
 Dado o tempo para realizar uma busca por todos os processos, é inviável que ela
 seja feita para cada consulta realizada na ferramenta. A solução foi criar um
-banco de dados para funcionar como uma \textit{cache} para os processos já
-conhecidos. A \textit{cache} acaba sendo útil também para requisições a
+banco de dados simples para funcionar como uma \textit{cache} para os processos
+já conhecidos. A \textit{cache} acaba sendo útil também para requisições a
 intervalos de processos com intersecções, visto que os processos conhecidos não
 precisarão ser re-buscados por requisições ao servidor do TJ-RJ, estando já
 prontos localmente (do ponto de vista de onde a ferramenta está rodando).
@@ -412,16 +490,16 @@ para a coluna \textit{``state''} descritos na~\Cref{tbl:valores-coluna-state}.
 
 \begin{table}[htb]
     \centering
-    \begin{tabular}{lll}
+    \begin{tabular}{llp{0.8\textwidth}}
         \toprule
         \multicolumn{3}{c}{Processos} \\
         \midrule
         Coluna & Tipo & Descrição \\
         \midrule \\
-        *\texttt{id} & text & \\
-        \texttt{cache\_state} & text & \\
-        \texttt{assunto} & text & \\
-        \texttt{json} & text & \\
+        *\texttt{id} & text & Número do processo no padrão unificado. \\
+        \texttt{cache\_state} & text & Estado atual do processo na \textit{cache}. \\
+        \texttt{assunto} & text & Assunto do processo. \\
+        \texttt{json} & text & Dados do processo no formato JSON espelhando os campos retornados pela API do ww3. \\
         \bottomrule
     \end{tabular}
     \caption{%
@@ -433,10 +511,13 @@ para a coluna \textit{``state''} descritos na~\Cref{tbl:valores-coluna-state}.
 
 \begin{table}[htb]
     \centering
-    \begin{tabular}{ll}
+    \begin{tabular}{lp{0.8\textwidth}}
         \toprule
         Estado & Descrição \\
         \midrule \\
+        \texttt{CACHED} & O número do processo é válido e os dados do processo estão na \textit{cache}. \\
+        \texttt{INVALID} & O número do processo é inválido (por exemplo, dígitos de validação não conferem pelo algoritmo do TJ). \\
+        \texttt{NOT\_CACHED} & O número do processo é válido porém os dados dele não estão na \textit{cache}. Para uso no software, não é registrado na \textit{cache}. \\
         \bottomrule
     \end{tabular}
     \caption{%
