@@ -33,3 +33,28 @@
 \newcommand{\shadecell}{{\cellcolor{shadecolor}}}
 
 \newcommand{\notfound}{\cellcolor{black}\color{white}}
+
+% Comandos específicos para o Tikz
+\newcommand{\bloco}[5]{
+    % row, t, size, color, label
+    \filldraw[
+        fill=#4!30!white,
+        draw=#4,
+    ]
+        (#2+1,#1) rectangle (#2+#3+1,#1+1)
+        node at (#2 + 1.5,#1 + 0.5) {#5}
+    ;
+}
+
+\newcommand{\blocoR}[2]{
+    % t, label
+    \bloco{6}{#1}{1}{red}{#2}
+}
+\newcommand{\blocoT}[2]{
+    % t, label
+    \bloco{6}{#1}{1}{gray}{#2}
+}
+\newcommand{\blocoE}[3]{
+    % row, t, size
+    \bloco{6-#1}{#2}{#3}{blue}{$E_#1$}
+}

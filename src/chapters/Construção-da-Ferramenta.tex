@@ -308,10 +308,15 @@ na~\Cref{tbl:respostas-ww3}.
 \end{table}
 
 A resposta em formato JSON para busca por número, em caso de um número válido
-de um processo existente, é um único objeto em que cada campo é uma chave do
-objeto. Essas chaves são pré-definidas e algumas opcionais, então para a
-extração dos campos desejados basta uma consulta simples a elas no objeto
-conforme a relação exposta na~\Cref{tbl:relação-chaves-campos-json}.
+de um processo existente, é um único objeto em que cada campo do processo
+possui uma chave correspondente no objeto. Essas chaves são pré-definidas e
+algumas opcionais, então para a extração dos campos desejados basta uma
+consulta simples a elas no objeto seguindo a relação exposta
+na~\Cref{tbl:relação-chaves-campos-json}.
+
+Apesar de esta estratégia se demonstrar mais fácil e eficiente de se
+implementar e utilizar, ambas foram mantidas na ferramenta para a extração de
+dados em TJs que não possuam uma API JSON como a do TJ-RJ.
 
 \begin{table}[htb]
     \tiny
@@ -327,8 +332,8 @@ conforme a relação exposta na~\Cref{tbl:relação-chaves-campos-json}.
         Unidade Federativa (UF) & \texttt{"uf"} & \texttt{"RJ"} \\
         Advogados (Nome, Número da OAB, ) & \texttt{"advogados"} & \texttt{[\{"nomeAdv": "DEFENSOR PÚBLICO", "numOab": "0"\}, ...]} \\
         Cidade & \texttt{"cidade"} & \texttt{"Rio de Janeiro"} \\
-        Personagens (Autor, ...) & \texttt{"personagens"} & \texttt{[\{"codPers": "29760922", "nome": "MINISTERIO PUBLICO DO ESTADO DO RIO DE JANEIRO", "codTipPers": "1", "descPers": "Autor", "tipoPolo": "A"\}, ...]} \\
-        Última Movimentação do Processo & \texttt{"ultMovimentoProc"} & \texttt{\{"dtAlt": "01/01/2021", "descrMov": "Exemplo", "dtMovimento": "01/01/2021", "dt": ""\}} \\
+        Personagens (Autor, Autor do Fato, \ldots) & \texttt{"personagens"} & \texttt{[\{"codPers": "29760922", "nome": "MINISTERIO PUBLICO DO ESTADO DO RIO DE JANEIRO", "codTipPers": "1", "descPers": "Autor", "tipoPolo": "A"\}, ...]} \\
+        Última Movimentação do Processo & \texttt{"ultMovimentoProc"} & \texttt{\{"codTipAnd":6,"ordem":34,"dtAlt":"23/05/2022","descrMov":"Juntada - Documento","dtMovimento":"23/05/2022", ...\}} \\
         \bottomrule
     \end{tabular}
     \caption{%
@@ -338,12 +343,6 @@ conforme a relação exposta na~\Cref{tbl:relação-chaves-campos-json}.
     }
     \label{tbl:relação-chaves-campos-json}
 \end{table}
-
-\todo{%
-    Em algum ponto, esclarecer que as duas estratégias foram mantidas pois,
-    apesar do TJ-Rj possuir uma API JSON, outros TJs podem não ter, então a
-    implementação existente pode ser útil.
-}
 
 \section{Estratégias de aceleração de consulta}
 
@@ -380,10 +379,98 @@ formas de otimizar a consulta para atingir essa meta.
 A maior parte do tempo desprendido na busca por processos é o tempo de IO
 (\todo{\Cref{gra:tempo-io-vs-proc}}), especialmente na espera pela resposta do
 servidor. Sendo assim, esta estratégia é então aproveitar o recurso de
-programação assíncrona nativo de Python 3.5+ baseado em Corrotinas com
-\texttt{async/await}, disparando passos (sequências de tamanho fíxo) de
-múltiplas requisições e processando as respostas conforme o servidor
-respondê-las. O tamanho adequado de passo escolhido como padrão foi de
+programação assíncrona nativo de Python 3.5+, baseado em Corrotinas com
+\texttt{async/await}~\cite{spec:pep0492}, para que apenas o envio das
+requisições e o tratamento da resposta sejam sequenciais entre si, porém
+paralelos com relação às operações de IO (IO não-bloqueante).
+
+Para ilustrar o mecanismo de requisições assíncronas,
+a~\Cref{gra:modelo-temporização-requisições} apresenta a ordem e quando ocorrem
+as operações relacionadas às requisições enviadas ao domínio de um TJ
+considerando um caso hipotético com tempos arbitrários de espera para as
+requisições. Para as requisições síncronas, o processador seria obrigado a
+esperar pela resposta do servidor antes de começar a próxima tarefa para só
+então efetuar a próxima requisição, enquanto no modelo com requisições
+assíncronas todas as requisições são disparadas no início e, conforme o
+servidor responde às requisições, suas respostas já são tratadas imediatamente.
+Como efeito prático considerando o cenário exposto, em $Tempo = 12$ se conclui
+o tratamento de apenas uma única resposta no cenário síncrono, em contraste com
+o cenário assíncrono em que todas são tratadas nesse mesmo passo de tempo.
+
+\begin{figure}[H]
+    \begin{tikzpicture}
+        \useasboundingbox (0,0) rectangle (14,9.5);
+        \node at (6, 8.5) {Requisições síncronas};
+        \draw[step=1cm,lightgray,very thin] (1,0.1) grid (13.9,6.9);
+        \foreach \x in {0,1,2,3,4,5,6,7,8,9,10,11,12}
+            \draw ((1cm+\x cm,6.8) -- (1cm+\x cm,7.2) node[anchor=south] {$\x$};
+        \draw[very thick,->] (1,7) -- (14,7) node[anchor=south west] {};
+        \node at (0,7.5) {Tempo};
+        \node at (-0.5,6.5) {Processador};
+        \foreach \i in {1,...,6}{
+            \node at (0,6.5-\i) {$E_\i$};
+        }
+        \blocoR{0}{$R_1$}
+        \blocoE{1}{1}{6}
+        \blocoT{7}{$T_1$}
+        \blocoR{8}{$R_2$}
+        \blocoE{2}{9}{4}
+    \end{tikzpicture}
+
+    \begin{tikzpicture}
+        \useasboundingbox (0,0) rectangle (14,9.5);
+        \node at (6, 8.5) {Requisições assíncronas};
+        \draw[step=1cm,lightgray,very thin] (1,0.1) grid (13.9,6.9);
+        \foreach \x in {0,1,2,3,4,5,6,7,8,9,10,11,12}
+            \draw ((1cm+\x cm,6.8) -- (1cm+\x cm,7.2) node[anchor=south] {$\x$};
+        \draw[very thick,->] (1,7) -- (14,7) node[anchor=south west] {};
+        \node at (0,7.5) {Tempo};
+        \node at (-0.5,6.5) {Processador};
+        \foreach \i in {1,...,6}{
+            \node at (0,6.5-\i) {$E_\i$};
+        }
+        \foreach \i in {1,2,3,4,5,6}{
+            \blocoR{\i-1}{$R_\i$};
+        }
+        \foreach \i [count=\n] in {2,1,3,4,5,6}{
+            \blocoT{\n + 5}{$T_\i$};
+        }
+        \blocoE{1}{1}{6}
+        \blocoE{2}{2}{4}
+        \blocoE{3}{3}{4}
+        \blocoE{4}{4}{5}
+        \blocoE{5}{5}{5}
+        \blocoE{6}{6}{5}
+    \end{tikzpicture}
+    \caption{%
+        Comparativo ilustrando como seriam executadas as operações de envio,
+        espera e tratamento das requisições enviadas ao servidor de um TJ
+        hipotético considerando a obtenção dos dados de 6 processos, enumerados
+        como $P_{1...6}$. A sequência das operações estão em passos de tempo
+        discretos ordenados da esquerda para direita. A linha ``Processador''
+        indica em qual operação o processador está trabalhando em um
+        determinado passo de tempo e as linhas $E_{1...6}$ representam uma
+        operação de IO relacionada a uma requisição $R_i$, como a espera pela
+        resposta do servidor.
+        %
+        Para cada processo $P_i$, $R_i$ representa a operação de preparo e
+        envio da requisição que retornará os dados desse processo, e $T_i$
+        representa a operação de tratamento da resposta do servidor do TJ a
+        $R_i$ (por exemplo, classificação do processo como
+        válido/inválido/inexistente ou reconhecimento de resposta com captcha).
+    }
+    \label{gra:modelo-temporização-requisições}
+\end{figure}
+
+Como forma de evitar sobrecarga dos servidores dos TJs por um excesso de
+requisições em um período curto de tempo, evitando possíveis sanções de algum
+deles ou mesmo consumo excessivo de memória da máquina cliente devido à
+quantidade de objetos das Corrotinas instanciadas para as requisições, foi
+implementado um mecanismo limite de requisições simultâneas. O mecanismo
+funciona separando os IDs dos processos a serem buscados em ``passos'', em que
+cada passo dispara um número fixo de requisições e o próximo passo só é
+executado quando todas do atual tiverem sido tratadas. O tamanho (quantidade de
+processos por passo) adequado de passo escolhido como padrão foi de
 \todofootnote{100 processos}{Escolher valor melhor quando forem apresentados os
 resultados}. Resultados de ganhos para diferentes tamanhos de passo estão
 expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
@@ -395,72 +482,81 @@ expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
 \end{figure}
 
 Para melhor visualização da implementação,
-as~\Cref{lst:requisição-processos-síncrona,lst:requisição-processos-assíncrona}
-reproduzem, abstraindo algumas das operações para focar na questão de
-programação assíncrona, o procedimento de busca por processos respectivamente
-de forma síncrona e assíncrona.
+a~\Cref{lst:requisição-processos-síncrona-e-assíncrona} reproduz, abstraindo as
+operações que não dizem respeito à programação assíncrona, o procedimento de
+busca por processos respectivamente de forma síncrona e assíncrona.
 
 \begin{listing}[htb]
-    \begin{minted}[autogobble,breaklines]{python}
-        def fetch_process(
-            url: str,
-            id_: str,
-            filter_function: FilterFunction = lambda _: True,
-        ) -> dict[str, Any]:
-            """
-            Busca um único processo com o número dado em `id_` utilizando a API
-            em `url`.
-            """
+    \tiny
+    \begin{minipage}[t]{0.5\textwidth}
+        \begin{minted}[gobble=12,breaklines]{python}
+            def fetch_process(
+                session: requests.Session,
+                url: str,
+                id_: str,
+            ) -> dict[str, Any]:
+                """
+                Busca um único processo com o número dado em
+                `id_` utilizando a API em `url`, filtrando
+                processos por um critério arbitrário (ex:
+                se contém um assunto específico).
+                """
+                response = session.post(
+                    url, json={"numProcesso": id_}
+                )
 
-            response = requests.post(url, json={"numProcesso": id_})
+                return classify_process(response.json())
 
-            return classify_process(response.json(), filter_function)
+            def download_processes(
+                url: str,
+                ids: list[str],
+                sink: Path,  # Onde os processos serão salvos
+            ) -> None:
+                """Salva todos os processos com determinados IDs em um arquivo JSONL."""
+                with requests.Session() as session:
+                    for id_ in ids:
+                        process = fetch_process(session, id)
+                        save_process(process, sink)
+        \end{minted}
+    \end{minipage}
+    \begin{minipage}[t]{0.6\textwidth}
+        \begin{minted}[gobble=12,breaklines]{python}
+            async def fetch_process(
+                session: aiohttp.ClientSession,
+                url: str,
+                id_: str,
+            ) -> dict[str, Any]:
+                """
+                Busca um único processo com o número dado em
+                `id_` utilizando a API em `url`.
+                """
+                response = requests.post(url, json={"numProcesso": id_})
 
-        def fetch_processes(
-            url: str,
-            ids: list[str],
-            sink: Path,  # Onde os processos serão salvos
-        ) -> int:
-            for id_ in ids:
-                save_process(fetch_process(id), sink)
-    \end{minted}
+                return classify_process(response.json(), filter_function)
+
+            async def download_processes(
+                url: str,
+                ids: list[str],
+                sink: Path,  # Onde os processos serão salvos
+                step_size: int,  # Número de processos por passo
+            ) -> None:
+                async with aiohttp.ClientSession() as session:
+                    for step_ids in iter_in_steps(ids, step_size):
+                        requests = (
+                            fetch_process(session, url, step_id)
+                            for step_id in step_ids
+                        )
+                        processes = await asyncio.gather(*requests)
+
+                        for process in processes:
+                            save_process(process, sink)
+        \end{minted}
+    \end{minipage}
     \caption{%
         Reprodução do procedimento de busca por processos de maneira sequencial
-        (síncrona).
+        (síncrona, à esquerda) e concorrente/não-bloqueante (assíncrona, à direita).
     }
-    \label{lst:requisição-processos-síncrona}
-\end{listing}
-
-\begin{listing}[htb]
-    \begin{minted}[autogobble,breaklines]{python}
-        async def fetch_process(
-            session: aiohttp.ClientSession,
-            url: str,
-            id_: str,
-            filter_function: FilterFunction = lambda _: True,
-        ) -> dict[str, Any]:
-            """
-            Busca um único processo com o número dado em `id_` utilizando a API
-            em `url`.
-            """
-
-            response = requests.post(url, json={"numProcesso": id_})
-
-            return classify_process(response.json(), filter_function)
-
-        async def fetch_processes(
-            url: str,
-            ids: list[str],  % TODO: COMPLETAR!!!
-            sink: Path,  # Onde os processos serão salvos
-        ) -> int:
-            for id_ in ids:
-                save_process(fetch_process(id), sink)
-    \end{minted}
-    \caption{%
-        Reprodução do procedimento de busca por processos de maneira
-        concorrente não-bloqueante (assíncrona).
-    }
-    \label{lst:requisição-processos-assíncrona}
+    \label{lst:requisição-processos-síncrona-e-assíncrona}
 \end{listing}
 
 
@@ -476,21 +572,33 @@ de forma síncrona e assíncrona.
 \end{todolist}
 
 Dado o tempo para realizar uma busca por todos os processos, é inviável que ela
-seja feita para cada consulta realizada na ferramenta. A solução foi criar um
-banco de dados simples para funcionar como uma \textit{cache} para os processos
-já conhecidos. A \textit{cache} acaba sendo útil também para requisições a
-intervalos de processos com intersecções, visto que os processos conhecidos não
-precisarão ser re-buscados por requisições ao servidor do TJ-RJ, estando já
-prontos localmente (do ponto de vista de onde a ferramenta está rodando).
+reacesse o servidor dos TJs para cada consulta realizada na ferramenta. A
+estratégia para atacar esse problema consiste em guardar os processos
+previamente buscados em um banco de dados simples, funcionando como uma
+\textit{cache} para os processos já conhecidos. A \textit{cache} acaba sendo
+útil também para diferentes requisições em que seus intervalos de números de
+processos se interseccionem, visto que a primeira requisição atendida já trará
+alguns dos processos da(s) próxima(s), não precisando ser re-buscados por
+requisições ao servidor do TJ-RJ já que estarão prontos no banco de dados da
+ferramenta. Há também uma vantagem adicional com relação a descoberta de
+processos válidos uma vez que, conhecidos todos os processos de um único ano,
+não é necessário gastar tempo descobrindo quais números de processos
+correspondem a processos reais.
 
-A \textit{cache} foi implementada como um instância de banco de
-dados~\cite{tool:sqlite} com uma única tabela ``Processos''
-(\Cref{tbl:estrutura-tabela-processos}), com a descrição dos valores possíveis
-para a coluna \textit{``state''} descritos na~\Cref{tbl:valores-coluna-state}.
+A \textit{cache} foi implementada como um instância de banco de dados
+SQLite~\cite{tool:sqlite} com uma única tabela ``Processos'' (reproduzida na
+\Cref{tbl:estrutura-tabela-processos}), com a descrição dos valores possíveis
+para a coluna \textit{``cache\_state''} descritos
+na~\Cref{tbl:valores-coluna-state}. A chave primária da tabela foi escolhida
+como o número do processo seguindo a numeração unificada, visto que é uma
+informação única a cada processo e, convenientemente, é o parâmetro de busca
+utilizado na extração, facilitando a separação de quais processos serão
+buscados na \textit{cache} e quais serão requisitados ao servidores dos TJs.
 
 \begin{table}[htb]
+    \small
     \centering
-    \begin{tabular}{llp{0.8\textwidth}}
+    \begin{tabular}{llp{0.6\textwidth}}
         \toprule
         \multicolumn{3}{c}{Processos} \\
         \midrule
@@ -524,5 +632,19 @@ para a coluna \textit{``state''} descritos na~\Cref{tbl:valores-coluna-state}.
         Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
         ``*'' indica que o campo é uma chave primária.
     }
-    \label{tbl:estrutura-tabela-processos}
+    \label{tbl:valores-coluna-state}
 \end{table}
+
+Essa separação é uma operação trivial: para saber se um processo deve ou não
+ser requisitado aos servidores dos TJs, basta para cada número de processo da
+lista de números a serem buscados consultar, na \textit{cache}, se não existe
+uma entrada com esse número como valor da chave primária e que o valor de
+``cache\_state'' seja ``CACHED''.
+
+Um processo é salvo na \textit{cache} quando
+
+\todo{Falar sobre quando um processo é cacheado e quando não é}
+
+\section{Estratégias adicionais}
+
+\subsection{Filtragem dos resultados}
