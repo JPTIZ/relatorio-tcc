@@ -641,7 +641,9 @@ lista de números a serem buscados consultar, na \textit{cache}, se não existe
 uma entrada com esse número como valor da chave primária e que o valor de
 ``cache\_state'' seja ``CACHED''.
 
-Um processo é salvo na \textit{cache} quando
+Um processo sempre é salvo na \textit{cache} quando o servidor do TJ responde à
+requisição referente a uma consulta por número de processo, com exceção de
+casos em que a resposta é um erro de captcha.
 
 \todo{Falar sobre quando um processo é cacheado e quando não é}
 
