@@ -54,11 +54,11 @@ descrevem em detalhes.}
 \end{todolist}
 
 A ferramenta foi projetada como uma biblioteca de \textit{software} acompanhada
-de duas interfaces de usuário~\footnote{Neste ponto, ``usuário'' refere-se a
+de duas interfaces de usuário~\footnote{Neste capítulo, ``usuário'' refere-se a
 alguém que não esteja utilizando a ferramenta como uma biblioteca de software,
 e sim como aplicação.}: uma aplicação de Interface de Linha de Comando
 (\textit{ILC}\footnote{Comumente referenciado com a sigla em inglês ``CLI'', de
-``Command Line Interface''.} e uma aplicação de servidor Web.
+``Command Line Interface''.}) e uma aplicação de servidor Web.
 
 A ILC tem como objetivo permitir o uso de boa parte dos diferentes recursos da
 biblioteca em um terminal para a execução tarefas pontuais, como exibir
@@ -69,44 +69,80 @@ fins de desenvolvimento.
 O servidor Web é destinado ao usuário que queira uma interface de simples
 acesso e uso da ferramenta, primariamente focando na obtenção de dados dos TJs
 com os recursos que não estejam disponíveis nas páginas oficiais dos TJs
-(descritos na~\todo{Referenciar Seção}), tendo em mente como público alvo
-jornalistas.
+(descritos na~\Cref{sec:Motivação-e-Contexto}), tendo em mente como público
+alvo jornalistas.
 
 \section{Estratégias de extração}
 
-O TJ-RJ possui rotas e subdomínios que dão acesso aos mesmos dados por formatos
-de apresentação diferentes. Foram elaboradas estratégias para extrair dados da
-rota que os fornece em formato HTML~\todofootnote{}{link da rota HTML},
-conhecida antes da produção efetiva da ferramenta, e da que os fornece em
-formato JSON~\todofootnote{}{link da rota JSON}, encontrada durante o processo
-de produção e portanto implementada posteriormente. O formato HTML é
-apresentado como uma página de consulta para um usuário comum, enquanto o
-formato JSON é um conjunto de rotas que implementam uma API Web.
+O TJ-RJ possui rotas e subdomínios que dão acesso aos mesmos dados de processos
+por formatos de apresentação diferentes. Foram elaboradas estratégias para
+extrair dados da rota que os fornece em formato HTML, conhecida antes da
+produção efetiva da ferramenta, e da que os fornece em formato JSON, encontrada
+durante o processo de produção e portanto implementada posteriormente. O
+formato HTML é apresentado como uma página de consulta para um usuário humano,
+enquanto o formato JSON é um conjunto de rotas que implementam uma API Web.
 
 Para a produção desta ferramenta não foi encontrada uma forma de se obter todos
-os processos de maneira direta. A estratégia, então, foi exaurir as
-possibilidades de valores de entrada de algum dos tipos de busca disponíveis
-nos portais do TJ-RJ. Analisando as dificuldades existentes em cada um dos
-tipos (\Cref{tbl:dificuldades-tipos-de-busca}), foi escolhido o campo de busca
-por número do processo por conta do domínio de valores válidos ser limitado e
-conhecido: números de processos são dados seguindo os formatos numéricos fixos
-\textbf{unificado} e \textbf{antigo}, respectivamente
-``NNNNNNN-NN.AAAA.8.19.NNNN'' e ``AAAA.NNN.NNNNNN-N'' em que ``AAAA'' é o ano
-de criação do documento do processo e cada ``N'' é um dígito de 0 a 9, logo é
-possível encontrar todos os processos apenas fixando o ano e testando
-diferentes combinações para os demais dígitos.
+os processos de maneira direta, como uma lista de números de processo
+existentes ou uma tabela de registros no TJ-RJ. A estratégia, então, foi
+descobri-los exaurindo as possibilidades de valores de entrada de algum dos
+tipos de busca disponíveis nos portais do TJ-RJ. Analisando as dificuldades
+existentes em cada um dos tipos (\Cref{tbl:dificuldades-tipos-de-busca}), foi
+escolhido o campo de busca por número do processo por conta do domínio de
+valores válidos ser limitado e conhecido: números de processos são dados
+seguindo os formatos numéricos fixos \textbf{unificado} e \textbf{antigo}.
 
-\begin{table}[htb]
+O \textbf{unificado} (também referenciado como ``numeração única'') é universal
+para todos os TJs, padronizado pelo CNJ
+\cite{spec:cnj-numeração-única,spec:cnj-numeração-única-resolução} e segue o
+padrão ``NNNNNNN-DD.AAAA.J.TR.OOOO'', em que ``NNNNNNN'' é um número sequencial
+e único dado a cada processo, ``DD'' são os dígitos verificadores validados
+pelo algoritmo Módulo 97 Base 10~\cite{spec:iso-modulo-97}, ``AAAA'' indica o
+ano de publicação, ``J'' identifica o órgão ou segmento do Poder Jucidiário
+conforme a relação enumerada em~\cite{spec:cnj-numeração-única-resolução}
+Artigo 1º \S 4º, ``TR'' é uma subclassificação do órgão/segmento e indica qual
+o Tribunal em questão (19 para o TJ-RJ) e ``OOOO'' é o código de a qual das
+unidades de origem (específicas para cada TJ) o processo se refere.
+
+O \textbf{antigo} é o formato de numeração próprio de uso interno que cada TJ
+define para si. O do TJ-RJ segue o padrão ``AAAA.OOO.NNNNNN-N'' em que ``AAAA''
+indica o ano de publicação, ``OOO'' é o código da unidade de origem e cada
+``N'' restante é um dígito de 0 a 9. Diferentemente da numeração única, os
+campos com ``N'' não são sequenciais, podendo haver sequências intercaladas de
+números que não correspondam a processos válidos.
+
+Considerando ambos os formatos de numeração, para se exaurir as entradas
+possíveis é possível fixar um ano e um TJ (neste caso, o TJ-RJ) --- o que
+também implica em fixar o segmento em 8 (valor para a categoria ``Justiça dos
+Estados e do Distrito Federal e Territórios'') --- e variar os dígitos para os
+demais campos. No caso da unidade de origem, é possível se basear em uma lista
+conhecida~\cite{spec:tjrj-codigos-unidades-de-origem}, o que reduz o número de
+entradas a se testar, e por fim os dígitos de verificação podem ser calculados
+a partir de uma combinação dos demais campos, não interferindo na quantidade de
+entradas.
+
+Apesar de supostamente o número de entradas a se testar para ambos os tipos de
+numeração ser o mesmo, foi escolhida a \textbf{numeração única} para descoberta
+de processos válidos tanto por caráter de padronização nacional, abrindo espaço
+para facilitar a adaptação de seu uso em outros TJs além do TJ-RJ do ponto de
+vista de implementação da ferramenta, quanto por algumas unidades de origem que
+possuem seu código de 4 dígitos não terem um espelho com 3
+dígitos~\cite{spec:tjrj-codigos-unidades-de-origem}.
+
+\begin{table}[tb]
     \centering
     \begin{tabular}{lp{0.65\textwidth}}
         \toprule
         Tipo de busca & Dificuldades \\
         \midrule
-        Por Número & Número alto de combinações possíveis (para cada ano, $10^{13}$ para numeração unificada ou $9 \times 10^{10}$ para numeração antiga). \\
+        Por Número & Número alto de combinações possíveis (para cada ano,
+                     $10^{7} \times |O|$ tanto para numeração unificada quanto
+                     antiga, em que $|O|$ é a quantidade de unidades de origem
+                     do TJ em questão). \\
         Por Nome & Inviável. Demanda conhecer todos os nomes existentes em processos. \\
         Por OAB & Sem garantia de cobertura completa. \\
         Por Nome do Advogado & Inviável. Demanda conhecer todos os nomes existentes em processos. \\
-        Por CPF / CNPJ & Número alto de combinações possíveis (em um sequenciamento ingenuo, $10^{11}$ para CPF e $10^{14}$ para CNPJ). \\
+        Por CPF / CNPJ & Número alto de combinações possíveis (em um sequenciamento ingênuo, $10^{11}$ para CPF e $10^{14}$ para CNPJ). \\
         Por Protocolo & Sem garantia de cobertura completa. \\
         Por Sentença & Sem garantia de cobertura completa. \\
         \bottomrule
@@ -118,18 +154,11 @@ diferentes combinações para os demais dígitos.
     \label{tbl:dificuldades-tipos-de-busca}
 \end{table}
 
-\todo{%
-    Sobre o formato numérico antigo: trocar para o \textbf{unificado} no
-    código, pois o antigo varia conforme vara/etc.
-}
-
 \review{Outros campos, como nome das partes por exemplo, possuem uma
 abrangência de valores muito grande e difícil de se conhecer em sua totalidade
 ou, nos casos como a busca por Sentença, não são capazes de, mesmo exauridas
 todas as combinações de valores de entrada, dar acesso a todos os processos
 registrados.}
-
-\review{A numeração dos processos não é sequencial}
 
 \subsection{Estratégia inicial: extração HTML}
 
