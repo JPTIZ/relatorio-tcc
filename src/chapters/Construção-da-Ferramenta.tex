@@ -1,13 +1,27 @@
-\chapter{Construção da Ferramenta~\label{chp:construção-da-ferramenta}}
+\chapter{Construção da Ferramenta \textit{tjscraper}~\label{chp:construção-da-ferramenta}}
 
 A ferramenta construída neste trabalho, nomeada \textit{\textbf{tjscraper}},
-foi produzida para ser capaz de extrair com qualidade
-satisfatória~\todofootnote{}{(Definir ``qualidade satisfatória'' --- em resumo:
-um formato que dê de usar os dados para alguma coisa e que não seja ``grego''
-para alguém que não seja da área)} os dados especificamente do TJ do Rio de
-Janeiro (TJ-RJ). As estratégias empregadas, portanto, levam em conta acessos
-que todos os acessos serão ao TJ-RJ, ainda que visando a possibilidade de serem
-aplicadas às páginas dos TJs dos demais estados.
+foi produzida para ser capaz de extrair com qualidade satisfatória os dados de
+processos dos Tribunais de Justiça (TJs), tendo no momento implementada a
+extração de dados especificamente do TJ do Rio de Janeiro (TJ-RJ). As
+estratégias empregadas, portanto, levam em conta acessos que todos os acessos
+serão ao TJ-RJ, ainda que visando a possibilidade de serem aplicadas às páginas
+dos TJs dos demais estados.
+
+Conforme critérios próprios deste trabalho, a qualidade dos dados extraídos
+será considerada satisfatória se:
+
+\begin{itemize}
+    \item Puderem ser trivialmente exportados para um formato legível para quem
+        não conheça o funcionamento interno da ferramenta. Tal formato pode ser
+        um formato de arquivo como uma planilha XLSX ou uma visualização em
+        tabela em HTML;
+    \item Possuírem campos úteis para análises tanto individuais quanto
+        estatísticas dos processos como nomes das partes, assunto, data de
+        abertura e última movimentação;
+    \item A forma como os dados estão guardados viabilize realizar consultas
+        personalizadas neles, tais como busca por assunto.
+\end{itemize}
 
 \section{Ferramentas utilizadas~\label{section:ferramentas-utilizadas}}
 
@@ -25,6 +39,9 @@ descrevem em detalhes.}
     linguagem de programação).
 }
 \begin{todolist}
+    \item Python 3.10 (listar motivos: incluir que não precisa de otimizações
+        agressivas do compilador pois o gargalo é IO de rede). Frisar as
+        palavras \textbf(``Critérios Técnicos'').
     \item Scrapy
     \item SQLite
     \item \ldots
