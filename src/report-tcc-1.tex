@@ -20,10 +20,42 @@
 \input{chapters/Trabalhos-Correlatos}
 
 \input{chapters/Construção-da-Ferramenta}
+\input{chapters/Implementação-da-Ferramenta}
 \input{chapters/Configuração-Experimental}
 \input{chapters/Resultados-experimentais}
 \input{chapters/Análise-de-Usabilidade}
 \input{chapters/Conclusões-e-perspectivas}
+
+\apendices
+
+% \input{appendices/}
+
+\chapter{Arquivo de Páginas}
+
+Tabela de páginas arquivadas para reprodutibilidade.
+
+\begin{center}
+    \begin{tabular}{p{0.5\textwidth}p{0.5\textwidth}}
+         \toprule
+         Descrição da Página & Arquivo \\
+         \midrule
+         TJ-RJ: Página de processo válido no subdomínio ww4. &
+         \url{https://web.archive.org/web/20220714040302/http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9}
+         \\
+         Tj-RJ: Página de processo inexistente no subdomínio ww4. &
+         \url{https://web.archive.org/web/20220714043304/http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2020.004.015548-9}
+         \\
+         Tj-RJ: Página de processo inválido no subdomínio ww4. &
+         \url{https://web.archive.org/web/20220714043454/http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=0}
+         \\
+         \bottomrule
+     \end{tabular}
+\end{center}
+
+\todo{%
+    Adicionar apêndice de tipagem linkando para diffs específicos com correções
+    obtidas por erros apontados pelo Mypy no GitHub.
+}
 
 \printbibheading
 \printbibliography{}

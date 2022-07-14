@@ -1,7 +1,7 @@
-\chapter{Construção da Ferramenta \textit{tjscraper}~\label{chp:construção-da-ferramenta}}
+\chapter{Construção da Ferramenta \tjscraper~\label{chp:construção-da-ferramenta}}
 
-A ferramenta construída neste trabalho, nomeada \textit{\textbf{tjscraper}},
-foi produzida para ser capaz de extrair com qualidade satisfatória os dados de
+A ferramenta construída neste trabalho, nomeada \textbf{\tjscraper}, foi
+produzida para ser capaz de extrair com qualidade satisfatória os dados de
 processos dos Tribunais de Justiça (TJs), tendo no momento implementada a
 extração de dados especificamente do TJ do Rio de Janeiro (TJ-RJ). As
 estratégias empregadas, portanto, levam em conta acessos que todos os acessos
@@ -54,10 +54,10 @@ descrevem em detalhes.}
 \end{todolist}
 
 A ferramenta foi projetada como uma biblioteca de \textit{software} acompanhada
-de duas interfaces de usuário~\footnote{Neste capítulo, ``usuário'' refere-se a
+de duas interfaces de usuário~\footnote{Nesta seção, ``usuário'' refere-se a
 alguém que não esteja utilizando a ferramenta como uma biblioteca de software,
 e sim como aplicação.}: uma aplicação de Interface de Linha de Comando
-(\textit{ILC}\footnote{Comumente referenciado com a sigla em inglês ``CLI'', de
+(ILC\footnote{Comumente referenciado com a sigla em inglês ``CLI'', de
 ``Command Line Interface''.}) e uma aplicação de servidor Web.
 
 A ILC tem como objetivo permitir o uso de boa parte dos diferentes recursos da
@@ -84,50 +84,14 @@ enquanto o formato JSON é um conjunto de rotas que implementam uma API Web.
 
 Para a produção desta ferramenta não foi encontrada uma forma de se obter todos
 os processos de maneira direta, como uma lista de números de processo
-existentes ou uma tabela de registros no TJ-RJ. A estratégia, então, foi
-descobri-los exaurindo as possibilidades de valores de entrada de algum dos
-tipos de busca disponíveis nos portais do TJ-RJ. Analisando as dificuldades
-existentes em cada um dos tipos (\Cref{tbl:dificuldades-tipos-de-busca}), foi
-escolhido o campo de busca por número do processo por conta do domínio de
-valores válidos ser limitado e conhecido: números de processos são dados
-seguindo os formatos numéricos fixos \textbf{unificado} e \textbf{antigo}.
-
-O \textbf{unificado} (também referenciado como ``numeração única'') é universal
-para todos os TJs, padronizado pelo CNJ
-\cite{spec:cnj-numeração-única,spec:cnj-numeração-única-resolução} e segue o
-padrão ``NNNNNNN-DD.AAAA.J.TR.OOOO'', em que ``NNNNNNN'' é um número sequencial
-e único dado a cada processo, ``DD'' são os dígitos verificadores validados
-pelo algoritmo Módulo 97 Base 10~\cite{spec:iso-modulo-97}, ``AAAA'' indica o
-ano de publicação, ``J'' identifica o órgão ou segmento do Poder Jucidiário
-conforme a relação enumerada em~\cite{spec:cnj-numeração-única-resolução}
-Artigo 1º \S 4º, ``TR'' é uma subclassificação do órgão/segmento e indica qual
-o Tribunal em questão (19 para o TJ-RJ) e ``OOOO'' é o código de a qual das
-unidades de origem (específicas para cada TJ) o processo se refere.
-
-O \textbf{antigo} é o formato de numeração próprio de uso interno que cada TJ
-define para si. O do TJ-RJ segue o padrão ``AAAA.OOO.NNNNNN-N'' em que ``AAAA''
-indica o ano de publicação, ``OOO'' é o código da unidade de origem e cada
-``N'' restante é um dígito de 0 a 9. Diferentemente da numeração única, os
-campos com ``N'' não são sequenciais, podendo haver sequências intercaladas de
-números que não correspondam a processos válidos.
-
-Considerando ambos os formatos de numeração, para se exaurir as entradas
-possíveis é possível fixar um ano e um TJ (neste caso, o TJ-RJ) --- o que
-também implica em fixar o segmento em 8 (valor para a categoria ``Justiça dos
-Estados e do Distrito Federal e Territórios'') --- e variar os dígitos para os
-demais campos. No caso da unidade de origem, é possível se basear em uma lista
-conhecida~\cite{spec:tjrj-codigos-unidades-de-origem}, o que reduz o número de
-entradas a se testar, e por fim os dígitos de verificação podem ser calculados
-a partir de uma combinação dos demais campos, não interferindo na quantidade de
-entradas.
-
-Apesar de supostamente o número de entradas a se testar para ambos os tipos de
-numeração ser o mesmo, foi escolhida a \textbf{numeração única} para descoberta
-de processos válidos tanto por caráter de padronização nacional, abrindo espaço
-para facilitar a adaptação de seu uso em outros TJs além do TJ-RJ do ponto de
-vista de implementação da ferramenta, quanto por algumas unidades de origem que
-possuem seu código de 4 dígitos não terem um espelho com 3
-dígitos~\cite{spec:tjrj-codigos-unidades-de-origem}.
+existentes ou uma tabela de registros no TJ-RJ. A estratégia adotada para isso,
+então, foi descobri-los exaurindo as possibilidades de valores de entrada de
+algum dos tipos de busca disponíveis nos portais do TJ-RJ. Analisando as
+dificuldades existentes em cada um dos tipos
+(\Cref{tbl:dificuldades-tipos-de-busca}), foi escolhido o campo de busca por
+número do processo por conta do domínio de valores válidos ser limitado e
+conhecido: números de processos são dados seguindo os formatos numéricos fixos
+\textbf{unificado} e \textbf{antigo}.
 
 \begin{table}[tb]
     \centering
@@ -154,108 +118,88 @@ dígitos~\cite{spec:tjrj-codigos-unidades-de-origem}.
     \label{tbl:dificuldades-tipos-de-busca}
 \end{table}
 
-\review{Outros campos, como nome das partes por exemplo, possuem uma
-abrangência de valores muito grande e difícil de se conhecer em sua totalidade
-ou, nos casos como a busca por Sentença, não são capazes de, mesmo exauridas
-todas as combinações de valores de entrada, dar acesso a todos os processos
-registrados.}
+O \textbf{unificado} (também referenciado como ``numeração única'') é universal
+para todos os TJs, padronizado pelo CNJ
+\cite{spec:cnj-numeração-única,spec:cnj-numeração-única-resolução} e segue o
+padrão ``NNNNNNN-DD.AAAA.J.TR.OOOO'', em que ``NNNNNNN'' é um número sequencial
+e único dado a cada processo, ``DD'' são os dígitos verificadores validados
+pelo algoritmo Módulo 97 Base 10~\cite{spec:iso-modulo-97}, ``AAAA'' indica o
+ano de distribuição, ``J'' identifica o órgão ou segmento do Poder Jucidiário
+conforme a relação enumerada em~\cite{spec:cnj-numeração-única-resolução}
+Artigo 1º \S 4º, ``TR'' é uma subclassificação do órgão/segmento e indica qual
+o Tribunal em questão (19 para o TJ-RJ) e ``OOOO'' é o código de a qual das
+unidades de origem (específicas para cada TJ) o processo se refere.
+
+O \textbf{antigo} é o formato de numeração próprio de uso interno que cada TJ
+define para si. O do TJ-RJ segue o padrão ``AAAA.OOO.NNNNNN-N'' em que ``AAAA''
+indica o ano de distribuição, ``OOO'' é o código da unidade de origem e cada
+``N'' restante é um dígito de 0 a 9. Diferentemente da numeração unificada, os
+campos com ``N'' não são designados de forma serial, podendo haver sequências
+intercaladas de números que não correspondam a processos válidos.
+
+Considerando ambos os formatos de numeração, para se exaurir as entradas
+possíveis é possível fixar um ano e um TJ (neste caso, o TJ-RJ) --- o que
+também implica em fixar o segmento em 8 (valor para a categoria ``Justiça dos
+Estados e do Distrito Federal e Territórios'') --- e variar os dígitos para os
+demais campos. No caso da unidade de origem, é possível se basear em uma lista
+conhecida~\cite{spec:tjrj-codigos-unidades-de-origem}, o que reduz o número de
+entradas a se testar, e por fim os dígitos de verificação podem ser calculados
+a partir de uma combinação dos demais campos, não interferindo na quantidade de
+entradas testadas.
+
+Apesar de supostamente o número de entradas a se testar para ambos os tipos de
+numeração ser o mesmo, a preferência foi dada à \textbf{numeração unificada}
+para descoberta de processos válidos tanto pelo caráter de padronização
+nacional, abrindo espaço para facilitar a adaptação de seu uso em outros TJs
+além do TJ-RJ do ponto de vista de implementação da ferramenta, quanto por
+algumas unidades de origem que possuem seu código de 4 dígitos não terem um
+espelho com 3 dígitos~\cite{spec:tjrj-codigos-unidades-de-origem}. Além disso,
+há também o fator de serialidade do campo ``N'' na numeração unificada, que
+permite saber que a partir do primeiro processo inexistente encontrado a busca
+pode ser finalizada concluindo-se que todos os processos daquele TJ registrados
+até o momento no sistema foram encontrados.
+
+Os demais métodos de busca, como via nome das partes, possuem uma abrangência
+de valores muito grande e difícil de se conhecer em sua totalidade ou, nos
+casos como a busca por Sentença, não são capazes de, mesmo exauridas todas as
+combinações de valores de entrada, dar acesso a todos os processos registrados
+(visto que nem todo processo possui uma sentença).
 
 \subsection{Estratégia inicial: extração HTML}
 
-\begin{todolist}
-    \item Ressaltar dificuldades com páginas diferentes, fornecendo links para
-          exemplos --- para fins de reprodutibilidade, o link será uma cópia
-          para um .html salvo no repositório do código da ferramenta, na pasta
-          de ``samples'' (amostras);
-\end{todolist}
-
-\review{Para extração das rotas do TJ-RJ que fornecem seu conteúdo no formato
-HTML, a estratégia é semelhante a reproduzir o acesso de um usuário comum ao
-efetuar uma busca. A rota de Consultas Processuais
-unificada~\footnote{\url{http://www4.tjrj.jus.br/ConsultaUnificada/consulta.do}}
-exibe uma página que permite a busca por processos por ambos os tipos de
-numeração.}
-
 Os resultados de consulta processual do TJ-RJ em HTML são os das requisições
-feitas ao subdomínio \url{ww4.tjrj.jus.br}. A estratégia de extração dos
-processos que ele disponibiliza é aproveitar que a identificação de qual
-processo está sendo visualizado pode ser feita através do parâmetro de URL
-\texttt{numProcesso}, cujo valor é o número do processo na numeração antiga,
-efetuando requisições para a mesma URL variando apenas esse parâmetro com um
-número de processo. Cada requisição pode retornar uma página de processo
-válido, inexistente~\footnote{Exemplo de URL de processo inexistente:
-\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2020.004.015548-9}},
+feitas ao subdomínio \url{ww4.tjrj.jus.br}. Em uma URL de visualização de um
+processo um válido~\footnote{Exemplo de URL de processo válido:
+\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9}.}
+nesse subdomínio (\Cref{fig:exemplo-pagina-ww4}), o parâmetro de URL
+(\textit{query string}) \texttt{numProcesso} identifica o número do processo na
+numeração antiga. A estratégia de extração dos processos disponibilizados por
+esse subdomínio é efetuar requisições para a mesma URL variando apenas esse
+parâmetro com um número de processo diferente utilizando a numeração
+\textbf{antiga}. Cada requisição pode retornar uma página de processo válido,
+inexistente~\footnote{Exemplo de URL de processo inexistente:
+\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2020.004.015548-9}.},
 de numeração inválida~\footnote{Exemplo de URL de processo inválido:
-\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaMov.do?numProcesso=0}}
-ou de Captcha (caso esteja fora do horário noturno~\todofootnote{}{Definir
-horário noturno em alguma seção anterior.}).
+\url{https://www4.tjrj.jus.br/consultaProcessoWebV2/consultaMov.do?numProcesso=0}.}
+ou de Captcha (caso esteja fora do horário noturno).
 
-Por não se tratar de um formato de descrição de dados (contrastando com JSON),
-a extração de páginas HTML demanda o uso de ferramentas especializadas que
-permitam a definição de padrões de como localizar dos campos desejados e
-separar seus respectivos valores. Por resolver essa demanda com recursos que
-visam facilitar tarefas comuns em raspagem de dados, foi escolhida a biblioteca
-Scrapy~\cite{lib:scrapy}. Assim, os passos da extração foram determinados como:
+No caso de páginas de processo válidos, os campos que compõem os dados de um
+processo estão todos na mesma página bastando então \textit{parsear} seu código
+HTML. Já as páginas de erro são identificáveis ora pelo seu título e ora pelo
+conteúdo com textos como ``Erro'' e ``Parâmetro Incorreto''
+(\Cref{fig:exemplo-tjrj-pagina-erro}).
 
-\begin{enumerate}
-    \item Dado um intervalo de números de processos (no formato unificado ou
-        antigo), as URLs correspondentes a cada um dos valores nele são
-        montadas e repassadas para uma \textit{spider} do Scrapy;
-    \item Cada URL passada irá eventualmente, em alguma ordem, chamar o método
-        \texttt{parse} da \textit{spider}, e nele é extraído o conteúdo de uma
-        página seguindo os passos~\label{step-1}:
-
-        \begin{enumerate}
-            \item Identificar se a página é de um processo inválido,
-                inexistente ou se há a exigência de preenchimento de um
-                textit{captcha}.
-            \item Caso seja um processo válido, buscam-se na página os campos
-                desejados utilizando
-        \end{enumerate}
-\end{enumerate}
-
-Para os passos do~\cref{step-1}, utilizou-se a especificação~\cite{spec:xpath}
-suportada nativamente pelo Scrapy para a busca dos padrões de resultado e de
-campos desejados no HTML da página.
-
-\todo{Especificar XPath para páginas de erro.}
-
-\newcommand{\urlProcValido}{\url{%
-    http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
-}}
-
-Uma página de resultado da consulta pública do subdomínio ww4 do TJ-RJ para um
-número de processo válido~\footnote{\urlProcValido}
-(\Cref{fig:exemplo-pagina-ww4}) apresenta os campos dos dados do processo em
-uma \textit{tag} HTML \texttt{<table>}, de forma que cada linha visual
-corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
-\texttt{td}: uma para o nome do campo e outra para o valor
-(\Cref{cod:html-assunto}). Assim, um campo ``A'' pode ser encontrado procurando
-por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho em
-relação à hierarquia do HTML da página. A expressão XPath que representa esse
-padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
-(\Cref{cod:extract_field}), que extrai o valor de um campo arbitrário em uma
-resposta contendo uma página HTML conforme a seguinte ideia:
-
-\begin{enumerate}
-    \item \texttt{//}: Define que o item buscado pode estar em qualquer ponto
-        do documento. Uma busca genérica dessa forma evita que pequenas
-        variações na hierarquia HTML da página prejudiquem a busca.
-    \item \texttt{td[text()='TEXTO:']}: Busca e seleciona um item da
-        \textit{tag} \texttt{<td>} que tenha como conteúdo exatamente a
-        \textit{string} ``TEXTO:''.
-    \item \texttt{/following-sibling::td}: Se foi encontrado o item, então será
-        seleciona o próximo vizinho de mesmo nível hierárquico que seja da
-        \textit{tag} \texttt{<td>}.
-    \item \texttt{/text()}: Desse item vizinho, captura-se o conteúdo dele como
-        \textit{string}. Por ser o último item do XPath, então esse será o
-        valor retornado pela busca.
-\end{enumerate}
-
+Por fim, ainda que o subdomínio ww4 também permita a busca por numeração única,
+ao acessar o resultado de um processo válido se chega à mesma página da busca
+por numeração antiga com o valor do parâmetro de URL \texttt{numProcesso}
+também na numeração antiga, e portanto não bastaria apenas variar o valor desse
+parâmetro com testes no formato da numeração única. É possível, contudo,
+aplicar a mesma tática de requisições em duas etapas descrita
+na~\Cref{sub:estrategia-api-json}.
 
 \begin{figure}[H]
     \centering{}
-    \includegraphics{img/exemplo-resultado-consulta-publica-1.png}
+    \includegraphics[width=0.8\textwidth,keepaspectratio]{img/exemplo-resultado-consulta-publica-1.png}
     \caption{%
         Página de resultado da consulta pública para o processo válido de
         número 2021.003.015548-9 (numeração antiga).
@@ -263,48 +207,18 @@ resposta contendo uma página HTML conforme a seguinte ideia:
     \label{fig:exemplo-pagina-ww4}
 \end{figure}
 
-\begin{listing}
+\begin{figure}[H]
     \centering{}
-    \begin{minted}[autogobble,breaklines]{html}
-        <tr>
-          <td class="info" valign="top" nowrap="nowrap">Assunto:</td>
-          <td valign="top">
-            Incapacidade Laborativa Permanente / Auxílio-Acidente (Art. 86) / Benefícios em Espécie
-          </td>
-        </tr>
-    \end{minted}
-    \caption{Código HTML do campo ``Assunto:'' presente na~\Cref{fig:exemplo-pagina-ww4}.}
-    \label{cod:html-assunto}
-\end{listing}
-
-\begin{listing}[htb]
-    \centering{}
-    \begin{minted}[breaklines]{python}
-        def extract_field(response: Response, field_text: str) -> str:
-            field_xpath = f"//td[text()='{field_text}:']/following-sibling::td/text()"
-            return response.xpath(field_xpath).get().strip()
-    \end{minted}
+    \includegraphics[width=0.8\textwidth,keepaspectratio]{img/exemplo-tjrj-pagina-erro}
     \caption{%
-        Código da função responsável pela extração de um campo em uma resposta
-        de uma requisição a uma página de visualização de processo.
+        Página de resultado da consulta pública para um número inválido de processo.
     }
-    \label{cod:extract_field}
-\end{listing}
+    \label{fig:exemplo-tjrj-pagina-erro}
+\end{figure}
 
-A extração de todos os campos desejados compõe os dados de um processo, que
-então é exportado como uma linha adicional em um arquivo no
-formato~\cite{spec:jsonlines}. Ao final de uma varredura por um intervalo de
-número de processos, o arquivo contém os dados de todos os processos processos
-dele.
-
-\subsection{Estratégia alternativa: varredura com API JSON}
+\subsection{Estratégia alternativa: varredura com API JSON\label{sub:estrategia-api-json}}
 
 \begin{todolist}
-    \item Iniciar descrevendo a relação entre parâmetros de busca da busca HTML
-          e as rotas como \texttt{/por-numero/}.
-    \item Expor sobre a existência de múltiplos sub-domínios do TJ-RJ;
-    \item Complementar com a falta de documentação da API do TJ-RJ (forma de
-          operação descoberta na base de tentativa e erro);
     \item Explicar rapidamente sobre a filtragem dos campos;
 \end{todolist}
 
@@ -312,39 +226,59 @@ dele.
 
 No subdomínio \url{ww3.tjrj.jus.br}, há uma página de
 busca~\footnote{\urlConsultaJson} semelhante à oferecida no subdomínio
-\url{ww4.tjrj.jus.br}, também fornecendo os dados em HTML. Porém, em vez de o
-servidor responder com o HTML pronto para o lado cliente renderizar, neste
-subdomínio o cliente envia uma requisição AJAX para o uma API do
-servidor~\footnote{\url{https://www3.tjrj.jus.br/consultaprocessual/api/processos/por-numero/publica}}
-que responde com um objeto JSON e então o HTML é atualizado no lado cliente de
-forma dinâmica. A estratégia então nesse caso passa a ser trivial: a partir do
-número de um processo, enviar uma requisição para a tal API e, com os dados de
-um processo em JSON, basta investigar quais os campos retornados, filtrar os de
-interesse e exportar para o arquivo~\cite{spec:jsonlines}.
+\url{ww4.tjrj.jus.br}, também fornecendo os dados em HTML. A diferença está que
+em vez de o servidor responder com o HTML completo e pronto para o lado cliente
+renderizar como uma página nova (que é o caso do subdomínio ww4), no subdomínio
+ww3 ao se acionar o botão de busca o cliente envia uma requisição AJAX para uma
+API do servidor, que responde com um objeto JSON com os dados do processo e
+então o HTML é atualizado no lado cliente de forma dinâmica. A estratégia então
+nesse caso passa a ser trivial: a partir do número de um processo, enviar uma
+requisição para a tal API e, com os dados de um processo em JSON, basta
+investigar quais os campos retornados, filtrar os de interesse e exportar da
+forma desejada.
 
-Por não ter sido encontrada uma documentação oficial, o funcionamento e
-respostas dadas pela API foram descobertos a partir de tentativa e erro. A API
-responde com dados de um processo através de requisições POST utilizando
-\textit{query strings} para especificar os parâmetros de busca, cujos tipos de
-resultados encontrados durante a construção desta ferramenta estão expostos
-na~\Cref{tbl:respostas-ww3}.
+A API do servidor do TJ-RJ possui rotas específicas para consultas pela
+numeração unificada~\footnote{Rota para consulta pela numeração unificada:
+\url{https://www3.tjrj.jus.br/consultaprocessual/api/processos/por-numeracao-unica}}
+e pela antiga~\footnote{Rota para consulta pela numeração antiga:
+\url{http://www3.tjrj.jus.br/consultaprocessual/api/processos/por-numero/publica}},
+ambas respondendo com dados de um processo através de requisições POST
+utilizando \textit{query strings} para especificar os parâmetros de busca.
+Os tipos de resultados de ambas as rotas encontrados durante a construção desta
+ferramenta estão expostos na~\Cref{tbl:respostas-ww3}.
+
+\begin{todolist}
+    \item Passar a parte de implementação para o capítulo de implementação;
+    \item Comentar que na numeração única as respostas são listas conforme
+        processos em instâncias diferentes.
+    \item Explicar as requisições em 2 etapas.
+\end{todolist}
 
 \begin{table}[htb]
     \tiny
     \centering
-    \begin{tabular}{lp{0.6\textwidth}}
+    \begin{tabular}{lp{0.55\textwidth}}
         \toprule
+        \multicolumn{2}{c}{Respostas comuns às consultas por numeração antiga e unificada} \\
+        \midrule
         \textit{Query String} & Resposta (JSON) \\
         \midrule
         \texttt{tipoProcesso=1\&codigoProcesso=0} & \mintinline{json}{["O processo informado não foi encontrado."]} \\
         \texttt{tipoProcesso=1\&codigoProcesso=abc} & \mintinline{json}{["Número do processo inválido."]} \\
-        \texttt{tipoProcesso=1\&codigoProcesso=2021.001.140006-4} & \mintinline{json}{{"codProc": "2021.001.140006-4", [...]}} \\
         Qualquer (em período noturno) & \begin{minipage}{0.6\textwidth}
             \begin{minted}[autogobble,breaklines]{json}
 {"status": 412, "mensagem": "Erro de validação do Recaptcha. Tente novamente."}
             \end{minted}
         \end{minipage}
         \\
+        \midrule
+        \multicolumn{2}{c}{Respostas: Consulta por numeração antiga} \\
+        \midrule
+        \texttt{tipoProcesso=1\&codigoProcesso=2021.001.140006-4} & \mintinline{json}{{"codProc": "2021.001.140006-4", [...]}} \\
+        \midrule
+        \multicolumn{2}{c}{Respostas: Consulta por numeração unificada} \\
+        \midrule
+        \texttt{tipoProcesso=1\&codigoProcesso=0158400-75.2021.8.19.0001} & \mintinline{json}{[{"codigoCnj": "0158400-75.2021.8.19.0001", [...]}]} \\
         \bottomrule
     \end{tabular}
     \caption{%
@@ -353,16 +287,21 @@ na~\Cref{tbl:respostas-ww3}.
     \label{tbl:respostas-ww3}
 \end{table}
 
-A resposta em formato JSON para busca por número, em caso de um número válido
-de um processo existente, é um único objeto em que cada campo do processo
-possui uma chave correspondente no objeto. Essas chaves são pré-definidas e
-algumas opcionais, então para a extração dos campos desejados basta uma
-consulta simples a elas no objeto seguindo a relação exposta
-na~\Cref{tbl:relação-chaves-campos-json}.
+A resposta em formato JSON para busca pela numeração unificada, em caso de um
+número válido de um processo existente, é uma lista com um objeto para cada
+instância daquele processo e apenas alguns, e não todos, os campos úteis. Já a
+resposta da busca pela numeração antiga é um único objeto com todos os campos
+úteis do processo.
 
-Apesar de esta estratégia se demonstrar mais fácil e eficiente de se
-implementar e utilizar, ambas foram mantidas na ferramenta para a extração de
-dados em TJs que não possuam uma API JSON como a do TJ-RJ.
+Conforme os motivos citados anteriormente para preferência pela busca por
+numeração unificada, ela é utilizada para a descoberta de novos processos, mas
+sendo incapaz de fornecer todos os dados do processo quando é encontrado um
+processo existente, uma requisição adicional para a rota da busca por numeração
+antiga é necessária. Para isso, se aproveita do fato de que o campo
+\texttt{numProcesso} dos objetos JSON da resposta da numeração unificada é o
+número equivalente daquele processo na numeração antiga. Com a resposta dessa
+requisição adicional, selecionam-se os campos úteis de acordo com a relação
+exposta na~\Cref{tbl:relação-chaves-campos-json}.
 
 \begin{table}[htb]
     \tiny
