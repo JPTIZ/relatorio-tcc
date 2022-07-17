@@ -1,0 +1,251 @@
+\chapter{Implementação da Ferramenta \tjscraper~\label{chp:implementação-da-ferramenta}}
+
+\section{Implementação das estratégias}
+
+\todo{
+    Descrever a implementação de forma geral, com passos como: 1. Normalização
+    dos parâmetros de busca; 2. Chamada da função de extração (que depende de
+    qual a estratégia utilizada); 3. Exportação dos dados.
+}
+
+\subsection{Extração HTML}
+
+Por não se tratar de um formato de descrição de dados (contrastando com JSON
+utilizado em~\Cref{sub:estrategia-api-json}), a extração em páginas HTML
+demanda que se encontrem padrões textuais/sintáticos que serão utilizados tanto
+para identificação de páginas de erro quanto para localizar os campos desejados
+e separar seus respectivos valores. A biblioteca Scrapy~\cite{lib:scrapy}, por
+resolver essa demanda com recursos que visam facilitar tarefas comuns em
+raspagem de dados, foi escolhida para essa tarefa. Os passos da extração foram
+determinados como:
+
+\begin{enumerate}
+    \item Dado um intervalo de números de processos (no formato unificado ou
+        antigo), as URLs correspondentes a cada um dos valores nele são
+        montadas e repassadas para uma \textit{spider} do Scrapy;
+    \item \label{step-1} Cada URL passada irá eventualmente, em alguma ordem, chamar o método
+        \texttt{parse} da \textit{spider}, e nele é extraído o conteúdo de uma
+        página seguindo os passos:
+
+        \begin{enumerate}
+            \item Identificar se a página é de um processo inválido,
+                inexistente ou se há a exigência de preenchimento de um
+                textit{captcha}.
+            \item Caso seja um processo válido, buscam-se na página os campos
+                desejados utilizando
+        \end{enumerate}
+\end{enumerate}
+
+Para os passos do~\cref{step-1}, utilizou-se a especificação~\cite{spec:xpath}
+suportada nativamente pelo Scrapy para a busca dos padrões de resultado e de
+campos desejados no HTML da página.
+
+\todo{Especificar XPath para páginas de erro.}
+
+\newcommand{\urlProcValido}{\url{%
+    http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
+}}
+
+\todofootnote{Uma página de resultado da consulta pública do subdomínio ww4 do
+TJ-RJ para um número de processo válido~\footnote{\urlProcValido}
+(\Cref{fig:exemplo-pagina-ww4}) apresenta os campos dos dados do processo em
+uma \textit{tag} HTML \texttt{<table>}, de forma que cada linha visual
+corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
+\texttt{td}: uma para o nome do campo e outra para o valor
+(\Cref{cod:html-assunto}). Assim, um campo ``A'' pode ser encontrado procurando
+por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho em
+relação à hierarquia do HTML da página.}{Este parágrafo deve ficar no capítulo
+de implementação ou de construção?} A expressão XPath que representa esse
+padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
+(\Cref{cod:extract_field}), que extrai o valor de um campo arbitrário em uma
+resposta contendo uma página HTML conforme a seguinte ideia:
+
+\begin{enumerate}
+    \item \texttt{//}: Define que o item buscado pode estar em qualquer ponto
+        do documento. Uma busca genérica dessa forma evita que pequenas
+        variações na hierarquia HTML da página prejudiquem a busca.
+    \item \texttt{td[text()='TEXTO:']}: Busca e seleciona um item da
+        \textit{tag} \texttt{<td>} que tenha como conteúdo exatamente a
+        \textit{string} ``TEXTO:''.
+    \item \texttt{/following-sibling::td}: Se foi encontrado o item, então será
+        seleciona o próximo vizinho de mesmo nível hierárquico que seja da
+        \textit{tag} \texttt{<td>}.
+    \item \texttt{/text()}: Desse item vizinho, captura-se o conteúdo dele como
+        \textit{string}. Por ser o último item do XPath, então esse será o
+        valor retornado pela busca.
+\end{enumerate}
+
+
+Finalizada a extração dos campos e tendo então os dados de um processo, eles
+são então exportados como uma linha adicional em um arquivo no
+formato~\cite{spec:jsonlines}. Ao final de uma varredura por um intervalo de
+número de processos, o arquivo contém os dados de todos os processos processos
+dele.
+
+\begin{listing}
+    \centering{}
+    \begin{minted}[autogobble,breaklines]{html}
+        <tr>
+          <td class="info" valign="top" nowrap="nowrap">Assunto:</td>
+          <td valign="top">
+            Incapacidade Laborativa Permanente / Auxílio-Acidente (Art. 86) / Benefícios em Espécie
+          </td>
+        </tr>
+    \end{minted}
+    \caption{Código HTML do campo ``Assunto:'' presente na~\Cref{fig:exemplo-pagina-ww4}.}
+    \label{cod:html-assunto}
+\end{listing}
+
+\begin{listing}[htb]
+    \centering{}
+    \begin{minted}[breaklines]{python}
+        def extract_field(response: Response, field_text: str) -> str:
+            field_xpath = f"//td[text()='{field_text}:']/following-sibling::td/text()"
+            return response.xpath(field_xpath).get().strip()
+    \end{minted}
+    \caption{%
+        Código da função responsável pela extração de um campo em uma resposta
+        de uma requisição a uma página de visualização de processo.
+    }
+    \label{cod:extract_field}
+\end{listing}
+
+
+\subsection{JSON}
+
+\review{Os processos são exportados em um arquivo de resultados em formato~\cite{spec:jsonlines}}
+
+\subsection{Assíncrona}
+
+\review{nativo de Python 3.5+, baseado em Corrotinas com \texttt{async/await}~\cite{spec:pep0492},}
+
+Como forma de evitar sobrecarga dos servidores dos TJs por um excesso de
+requisições em um período curto de tempo, evitando possíveis sanções de algum
+deles ou mesmo consumo excessivo de memória da máquina cliente devido à
+quantidade de objetos das Corrotinas instanciadas para as requisições, foi
+implementado um mecanismo limite de requisições simultâneas. O mecanismo
+funciona separando os IDs dos processos a serem buscados em ``passos'', em que
+cada passo dispara um número fixo de requisições e o próximo passo só é
+executado quando todas do atual tiverem sido tratadas. O tamanho (quantidade de
+processos por passo) adequado de passo escolhido como padrão foi de
+\todofootnote{100 processos}{Escolher valor melhor quando forem apresentados os
+resultados}. Resultados de ganhos para diferentes tamanhos de passo estão
+expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
+(\Cref{chp:Resultados-Experimentais}).
+
+\todo{Fazer comparativos para um intervalo grande de processos (100, 1000, 10000).}
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            xmin=-20,
+            xmax=130,
+            xtick={10, 100, 1000},
+            ylabel={Tempo (s)},
+            xlabel={Tamanho do bloco},
+            legend cell align=left,
+            legend style={
+                legend pos=outer north east,
+                cells={align=left},
+            },
+        ]
+            \pgfplotstableread{io_stats-batch-size.csv}{\table}
+            \pgfplotstablegetcolsof{\table}
+            \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+            \pgfplotsinvokeforeach{1,...,\numberofcols}{
+                \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
+                \addplot table [y index=#1] {\table};
+                \addlegendentryexpanded{\colname}
+            }
+        \end{axis}
+    \end{tikzpicture}
+    \caption{%
+        Comparação do tempo de obtenção de todos os processos de diferentes intervalos conforme tamanho do bloco.
+    }
+    \label{gra:tempos-tamanhos-de-passo-async}
+\end{figure}
+
+\todo{%
+    Em vez de gerar gráfico de sync/async (mover este para a parte de
+    resultados), gerar um gráfico para IO/step\_size.
+}
+
+Para melhor visualização da implementação,
+a~\Cref{lst:requisição-processos-síncrona-e-assíncrona} reproduz, abstraindo as
+operações que não dizem respeito à programação assíncrona, o procedimento de
+busca por processos respectivamente de forma síncrona e assíncrona.
+
+\begin{listing}[htb]
+    \tiny
+    \begin{minipage}[t]{0.5\textwidth}
+        \begin{minted}[gobble=12,breaklines]{python}
+            def fetch_process(
+                session: requests.Session,
+                url: str,
+                id_: str,
+            ) -> dict[str, Any]:
+                """
+                Busca um único processo com o número dado em
+                `id_` utilizando a API em `url`, filtrando
+                processos por um critério arbitrário (ex:
+                se contém um assunto específico).
+                """
+                response = session.post(
+                    url, json={"numProcesso": id_}
+                )
+
+                return classify_process(response.json())
+
+            def download_processes(
+                url: str,
+                ids: list[str],
+                sink: Path,  # Onde os processos serão salvos
+            ) -> None:
+                """Salva todos os processos com determinados IDs em um arquivo JSONL."""
+                with requests.Session() as session:
+                    for id_ in ids:
+                        process = fetch_process(session, id)
+                        save_process(process, sink)
+        \end{minted}
+    \end{minipage}
+    \begin{minipage}[t]{0.6\textwidth}
+        \begin{minted}[gobble=12,breaklines]{python}
+            async def fetch_process(
+                session: aiohttp.ClientSession,
+                url: str,
+                id_: str,
+            ) -> dict[str, Any]:
+                """
+                Busca um único processo com o número dado em
+                `id_` utilizando a API em `url`.
+                """
+                response = requests.post(url, json={"numProcesso": id_})
+
+                return classify_process(response.json(), filter_function)
+
+            async def download_processes(
+                url: str,
+                ids: list[str],
+                sink: Path,  # Onde os processos serão salvos
+                step_size: int,  # Número de processos por passo
+            ) -> None:
+                async with aiohttp.ClientSession() as session:
+                    for step_ids in iter_in_steps(ids, step_size):
+                        requests = (
+                            fetch_process(session, url, step_id)
+                            for step_id in step_ids
+                        )
+                        processes = await asyncio.gather(*requests)
+
+                        for process in processes:
+                            save_process(process, sink)
+        \end{minted}
+    \end{minipage}
+    \caption{%
+        Reprodução do procedimento de busca por processos de maneira sequencial
+        (síncrona, à esquerda) e concorrente/não-bloqueante (assíncrona, à direita).
+    }
+    \label{lst:requisição-processos-síncrona-e-assíncrona}
+\end{listing}

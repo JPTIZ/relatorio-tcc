@@ -331,43 +331,67 @@ exposta na~\Cref{tbl:relação-chaves-campos-json}.
 
 \section{Estratégias de aceleração de consulta}
 
-Partindo do uso da numeração dos processos como chave para descobrir todos os
-processos de um intervalo, para se exaurir todas as $10^{13}$ possibilidades da
-numeração unificada em menos de, por exemplo, 30 dias, o tempo médio de
-consulta por processo deve ser no máximo $???$. Sendo assim, é importante visar
-formas de otimizar a consulta para atingir essa meta.
-
-\todo{%
-    Para cada estratégia, nomeá-la para referenciar na parte de resultados
-    demonstrando os ganhos de aceleração. Nesta seção, não tomar conclusões
-    sobre ganhos, apenas enunciar e explicar como as estratégias funcionam e
-    por que elas foram decididas dessa forma.
-}
-
-\todo{%
-    Na seção de resultados, comparar um cenário base (sem aplicar as estratégias) com:
-}
-\begin{todolist}
-    \item Apenas uma das estratégias aplicadas (fazer para cada estratégia);
-    \item Com todas as estratégias aplicadas.
-\end{todolist}
-\todo{%
-    A hipótese lançada é de que o maior tempo desprendido é com IO (e não
-    processamento das requisições).
-    A conclusão deverá confirmar essa hipótese demonstrando que com a redução
-    (através de caching e através de requisições assíncronas) do gasto com IO o
-    tempo de consulta se reduz de forma diretamente proporcional.
-}
+Considerando uma análise ingênua de pior caso\footnote{O ``pior caso'' é quando
+o TJ em questão possui 9999999 processos registrados na última unidade de
+origem testada, assim para cada combinação de números de processo fixando o
+campo ``NNNNNNN'', apenas a última tentativa acarreta em um processo
+existente.} visando obter todos os processos do TJ-RJ exaurindo as $97
+\times 10^{7}$~\footnote{Esse número vem do cálculo descrito
+na~\Cref{tbl:dificuldades-tipos-de-busca}. No TJ-RJ, são 97 unidades de origem
+para serem testadas para cada um dos 7 dígitos em ``NNNNNNN''.} possibilidades
+da numeração unificada em um período arbitrário, o tempo médio para se obter 1
+processo válido deve ser no máximo $0.67ms$ para menos de 30
+dias\footnote{Aproveitando as 6h do horário noturno durante 30 dias: $\lceil
+\frac{30 \times 6 \times 3600s}{97 \times 10^7} \rceil = \sim0.67ms$} e
+$0.16ms$ para menos de 7 dias. Ou seja, para não tornar o uso da ferramenta
+inviável, é importante que o tempo de obtenção de dados de processos não supere
+tais valores. \todo{Nos resultados experimentais, ver se o tempo médio de
+obtenção de processos ficou nessa linha.}
 
 \subsection{Requisições assíncronas}
 
-A maior parte do tempo desprendido na busca por processos é o tempo de IO
-(\todo{\Cref{gra:tempo-io-vs-proc}}), especialmente na espera pela resposta do
-servidor. Sendo assim, esta estratégia é então aproveitar o recurso de
-programação assíncrona nativo de Python 3.5+, baseado em Corrotinas com
-\texttt{async/await}~\cite{spec:pep0492}, para que apenas o envio das
-requisições e o tratamento da resposta sejam sequenciais entre si, porém
-paralelos com relação às operações de IO (IO não-bloqueante).
+O tempo desprendido na busca por processos com operações de IO de rede,
+especialmente na espera pela resposta do servidor, cresce consideravelmente com
+o nº de processos buscados (\Cref{gra:tempo-io-por-num-processos}). Sendo
+assim, esta estratégia visa reduzir esse tempo aproveitando recursos de
+programação assíncrona para que apenas o envio das requisições e o tratamento
+da resposta sejam sequenciais entre si, porém paralelos com relação às
+operações de IO (via IO não-bloqueante).
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            xmin=-20,
+            xmax=130,
+            xtick={10, 50, 100},
+            ylabel={Tempo (s)},
+            xlabel={Nº de processos buscados (tamanho do intervalo)},
+            legend cell align=left,
+            legend style={
+                legend pos=outer north east,
+                cells={align=left},
+            },
+        ]
+            \pgfplotstableread{io_stats-io-cpu-by-num-proc.csv}{\table}
+            \pgfplotstablegetcolsof{\table}
+            \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+            \pgfplotsinvokeforeach{1,...,\numberofcols}{
+                \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
+                \addplot table [y index=#1] {\table};
+                \addlegendentryexpanded{\colname}
+            }
+        \end{axis}
+    \end{tikzpicture}
+    \caption{%
+        Relação do tempo desprendido com IO de rede conforme o tamanho do
+        intervalo de números de processos buscado. Dados obtidos pelo
+        perfilamento da execução de uma implementação em modelo síncrono das
+        funções de busca da ferramenta.
+    }
+    \label{gra:tempo-io-por-num-processos}
+\end{figure}
 
 Para ilustrar o mecanismo de requisições assíncronas,
 a~\Cref{gra:modelo-temporização-requisições} apresenta a ordem e quando ocorrem
@@ -378,9 +402,9 @@ esperar pela resposta do servidor antes de começar a próxima tarefa para só
 então efetuar a próxima requisição, enquanto no modelo com requisições
 assíncronas todas as requisições são disparadas no início e, conforme o
 servidor responde às requisições, suas respostas já são tratadas imediatamente.
-Como efeito prático considerando o cenário exposto, em $Tempo = 12$ se conclui
-o tratamento de apenas uma única resposta no cenário síncrono, em contraste com
-o cenário assíncrono em que todas são tratadas nesse mesmo passo de tempo.
+A consequência esperada no cenário exposto é em $Tempo = 12$ se concluir o
+tratamento de apenas uma única resposta no modelo síncrono, em contraste com o
+modelo assíncrono em que todas são tratadas nesse mesmo passo de tempo.
 
 \begin{figure}[H]
     \begin{tikzpicture}
@@ -439,110 +463,13 @@ o cenário assíncrono em que todas são tratadas nesse mesmo passo de tempo.
         resposta do servidor.
         %
         Para cada processo $P_i$, $R_i$ representa a operação de preparo e
-        envio da requisição que retornará os dados desse processo, e $T_i$
-        representa a operação de tratamento da resposta do servidor do TJ a
-        $R_i$ (por exemplo, classificação do processo como
-        válido/inválido/inexistente ou reconhecimento de resposta com captcha).
+        envio da requisição e $T_i$ representa a operação de tratamento da
+        resposta do servidor do TJ a $R_i$ (por exemplo, classificação do
+        processo como válido/inválido/inexistente ou reconhecimento de resposta
+        com \textit{Captcha}).
     }
     \label{gra:modelo-temporização-requisições}
 \end{figure}
-
-Como forma de evitar sobrecarga dos servidores dos TJs por um excesso de
-requisições em um período curto de tempo, evitando possíveis sanções de algum
-deles ou mesmo consumo excessivo de memória da máquina cliente devido à
-quantidade de objetos das Corrotinas instanciadas para as requisições, foi
-implementado um mecanismo limite de requisições simultâneas. O mecanismo
-funciona separando os IDs dos processos a serem buscados em ``passos'', em que
-cada passo dispara um número fixo de requisições e o próximo passo só é
-executado quando todas do atual tiverem sido tratadas. O tamanho (quantidade de
-processos por passo) adequado de passo escolhido como padrão foi de
-\todofootnote{100 processos}{Escolher valor melhor quando forem apresentados os
-resultados}. Resultados de ganhos para diferentes tamanhos de passo estão
-expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
-(\Cref{chp:Resultados-Experimentais}).
-
-\begin{figure}[htb]
-    \caption{Comparação do tempo desprendido por IO e por processamento restrito à CPU.}
-    \label{gra:tempo-io-vs-proc}
-\end{figure}
-
-Para melhor visualização da implementação,
-a~\Cref{lst:requisição-processos-síncrona-e-assíncrona} reproduz, abstraindo as
-operações que não dizem respeito à programação assíncrona, o procedimento de
-busca por processos respectivamente de forma síncrona e assíncrona.
-
-\begin{listing}[htb]
-    \tiny
-    \begin{minipage}[t]{0.5\textwidth}
-        \begin{minted}[gobble=12,breaklines]{python}
-            def fetch_process(
-                session: requests.Session,
-                url: str,
-                id_: str,
-            ) -> dict[str, Any]:
-                """
-                Busca um único processo com o número dado em
-                `id_` utilizando a API em `url`, filtrando
-                processos por um critério arbitrário (ex:
-                se contém um assunto específico).
-                """
-                response = session.post(
-                    url, json={"numProcesso": id_}
-                )
-
-                return classify_process(response.json())
-
-            def download_processes(
-                url: str,
-                ids: list[str],
-                sink: Path,  # Onde os processos serão salvos
-            ) -> None:
-                """Salva todos os processos com determinados IDs em um arquivo JSONL."""
-                with requests.Session() as session:
-                    for id_ in ids:
-                        process = fetch_process(session, id)
-                        save_process(process, sink)
-        \end{minted}
-    \end{minipage}
-    \begin{minipage}[t]{0.6\textwidth}
-        \begin{minted}[gobble=12,breaklines]{python}
-            async def fetch_process(
-                session: aiohttp.ClientSession,
-                url: str,
-                id_: str,
-            ) -> dict[str, Any]:
-                """
-                Busca um único processo com o número dado em
-                `id_` utilizando a API em `url`.
-                """
-                response = requests.post(url, json={"numProcesso": id_})
-
-                return classify_process(response.json(), filter_function)
-
-            async def download_processes(
-                url: str,
-                ids: list[str],
-                sink: Path,  # Onde os processos serão salvos
-                step_size: int,  # Número de processos por passo
-            ) -> None:
-                async with aiohttp.ClientSession() as session:
-                    for step_ids in iter_in_steps(ids, step_size):
-                        requests = (
-                            fetch_process(session, url, step_id)
-                            for step_id in step_ids
-                        )
-                        processes = await asyncio.gather(*requests)
-
-                        for process in processes:
-                            save_process(process, sink)
-        \end{minted}
-    \end{minipage}
-    \caption{%
-        Reprodução do procedimento de busca por processos de maneira sequencial
-        (síncrona, à esquerda) e concorrente/não-bloqueante (assíncrona, à direita).
-    }
-    \label{lst:requisição-processos-síncrona-e-assíncrona}
-\end{listing}
 
 
 \subsection{\textit{Cache} dos resultados}

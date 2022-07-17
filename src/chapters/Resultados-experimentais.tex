@@ -10,3 +10,18 @@
 
 \footnotetext{\todo{Verificar se por minuto não fica mais adequado (se o tempo de
 processamento em um segundo deixar muitos processos pendentes, no caso)}}
+
+\todo{%
+    Comparar um cenário base (sem aplicar as estratégias) com:
+}
+\begin{todolist}
+    \item Apenas uma das estratégias aplicadas (fazer para cada estratégia);
+    \item Com todas as estratégias aplicadas.
+\end{todolist}
+\todo{%
+    A hipótese lançada é de que o maior tempo desprendido é com IO (e não
+    processamento das requisições).
+    A conclusão deverá confirmar essa hipótese demonstrando que com a redução
+    (através de caching e através de requisições assíncronas) do gasto com IO o
+    tempo de consulta se reduz de forma diretamente proporcional.
+}
