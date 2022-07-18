@@ -1,28 +1,113 @@
 \chapter{Implementação da Ferramenta \tjscraper~\label{chp:implementação-da-ferramenta}}
 
+\section{Organização geral}
+
+A ferramenta foi projetada como uma biblioteca de \textit{software} acompanhada
+de duas interfaces de usuário~\footnote{Nesta seção, ``usuário'' refere-se a
+alguém que não esteja utilizando a ferramenta como uma biblioteca de software,
+e sim como aplicação.}: uma aplicação de Interface de Linha de Comando
+(ILC\footnote{Comumente referenciado com a sigla em inglês ``CLI'', de
+``Command Line Interface''.}) e uma aplicação de servidor Web.
+
+A ILC tem como objetivo permitir o uso de boa parte dos diferentes recursos da
+biblioteca em um terminal para a execução tarefas pontuais, como exibir
+informações sobre estado atual da \textit{cache}, iniciar um processo de
+extração, ou mesmo iniciar uma instância de servidor Web da ferramenta para
+fins de desenvolvimento.
+
+O servidor Web é destinado ao usuário que queira uma interface de simples
+acesso e uso da ferramenta, primariamente focando na obtenção de dados dos TJs
+com os recursos que não estejam disponíveis nas páginas oficiais dos TJs
+(descritos na~\Cref{sec:Motivação-e-Contexto}), tendo em mente como público
+alvo jornalistas.
+
+\section{Ferramentas utilizadas~\label{section:ferramentas-utilizadas}}
+
+Visando fomentar a iniciativa e movimento de Software-Livre, tomou-se como
+exigência própria para a implementação que todas as ferramentas, assim como a
+próprio \tjscraper, fossem Software-Livre por, além de outros fatores, questões
+de reprodutibilidade e auditoria.
+
+Para a implementação da \tjscraper, escolheu-se Python 3.10 como linguagem
+principal considerando os seguintes critérios técnicos: a premissa de que o
+gargalo do tempo de busca seria o de IO de Rede (para busca dos processos nos
+servidores dos TJs) ou de Armazenamento (para buscas na \textit{cache}); não se
+tratando de um problema inerentemente atrelado à CPU\footnote{Tradução livre
+para o termo em inglês ``\textit{CPU-bound}''.}, não seriam prioritárias
+otimizações agressivas de compilador tanto AOT nem
+JIT\footnote{``Ahead-Of-Time'' --- antes da execução do programa --- e
+``Just-In-Time'' --- durante a execução do programa ---, respectivamente.};
+familiaridade do autor com a linguagem; disponibilidade de recursos de
+abstração de alto-nível na biblioteca padrão da linguagem ou em bibliotecas
+externas para as principais operações da ferramenta.
+
+O gerenciamento de dependências e isolamento do ambiente de desenvolvimento foi
+feito utilizando \cite{about:poetry} visando tanto a reprodutibilidade dos
+resultados e funcionamento da ferramenta quanto facilitar seu empacotamento e
+distribuição. A ILC foi implementada via \cite{about:typer} pelas garantias de
+corretude de tipagem. Para a interface Web, foi escolhido \cite{about:flask}
+por conta da simplicidade e familiaridade do autor com a biblioteca.
+
+Das implementações de extração: como a estratégia inicial visa a extração em
+páginas HTML, \cite{lib:scrapy} foi utilizada por resolver essa demanda com
+recursos que visam facilitar tarefas comuns em raspagem de dados, enquanto a
+extração via API JSON utilizou-se puramente de recursos nativos da biblioteca
+padrão de Python. Do armazenamento, a \textit{cache} foi implementada como um
+banco de dados SQLite~\cite{tool:sqlite}. Da exportação, foram utilizados os
+formatos JSONLines como intermediário (visando facilitar a sua manipulação por
+outras bibliotecas e ser simples de gerar e exportar para outros formatos) e
+XLSX para visualização e manipulação por usuários via outros softwares que
+suportem o formato.
+
+
 \section{Implementação das estratégias}
 
-\todo{
-    Descrever a implementação de forma geral, com passos como: 1. Normalização
-    dos parâmetros de busca; 2. Chamada da função de extração (que depende de
-    qual a estratégia utilizada); 3. Exportação dos dados.
-}
+Toda consulta por processos por meio da \tjscraper~corresponde a um processo
+completo de extração dos dados dos processos dos TJs, sequenciado nos seguintes
+passos:
+
+\begin{enumerate}
+    \item Normalização dos parâmetros de busca a partir da entrada do usuário
+        para um formato interno padronizado da ferramenta \tjscraper. Os
+        parâmetros implementados no momento da publicação deste trabalho são:
+
+        \begin{itemize}
+            \item Intervalo de número dos processos, dados em termos do valor
+                inicial e final para o campo ``NNNNNNN'' da numeração
+                unificada;
+            \item Tribunal de Justiça a qual os processos pertencem;
+            \item Ano de distribuição dos processos;
+            \item Palavras a serem filtradas. Quando omitido, este parâmetro é
+                ignorado.
+        \end{itemize}
+    \item \label{item:pré-filtragem} Pré-filtragem dos dados averiguando quais
+        dos processos no intervalo de busca já estão na \textit{cache}, já
+        aplicando os demais parâmetros de busca. De resultado, dados
+        previamente salvos são já exportados e um sub-conjunto com os demais
+        números de processos é enviado para o passo
+        do~\cref{item:chamada-de-função}.
+    \item \label{item:chamada-de-função} Chamada da função de extração conforme
+        a estratégia de extração utilizado (HTML ou API JSON);
+    \item Exportação dos dados advindos do~\cref{item:chamada-de-função} no
+        formato escolhido pelo usuário suportado pela ferramenta.
+\end{enumerate}
+
+As estratégias enunciadas no~\Cref{chp:construção-da-ferramenta} se aplicam
+aos~\cref{item:pré-filtragem,item:chamada-de-função}, nos quais são feitas
+respectivamente as consultas à \textit{cache} e as requisições aos servidores
+dos TJs.
 
 \subsection{Extração HTML}
 
-Por não se tratar de um formato de descrição de dados (contrastando com JSON
-utilizado em~\Cref{sub:estrategia-api-json}), a extração em páginas HTML
-demanda que se encontrem padrões textuais/sintáticos que serão utilizados tanto
-para identificação de páginas de erro quanto para localizar os campos desejados
-e separar seus respectivos valores. A biblioteca Scrapy~\cite{lib:scrapy}, por
-resolver essa demanda com recursos que visam facilitar tarefas comuns em
-raspagem de dados, foi escolhida para essa tarefa. Os passos da extração foram
+Para a extração dos dados em páginas HTML, os passos da extração foram
 determinados como:
 
 \begin{enumerate}
     \item Dado um intervalo de números de processos (no formato unificado ou
         antigo), as URLs correspondentes a cada um dos valores nele são
-        montadas e repassadas para uma \textit{spider} do Scrapy;
+        montadas e repassadas para uma \textit{spider}\footnote{Mecanismo
+        interno do Scrapy que reorganiza, escalona e efetua requisições e
+        repassa à função de tratamento de suas respostas.} do Scrapy;
     \item \label{step-1} Cada URL passada irá eventualmente, em alguma ordem, chamar o método
         \texttt{parse} da \textit{spider}, e nele é extraído o conteúdo de uma
         página seguindo os passos:
@@ -30,7 +115,7 @@ determinados como:
         \begin{enumerate}
             \item Identificar se a página é de um processo inválido,
                 inexistente ou se há a exigência de preenchimento de um
-                textit{captcha}.
+                \textit{captcha}.
             \item Caso seja um processo válido, buscam-se na página os campos
                 desejados utilizando
         \end{enumerate}
@@ -46,16 +131,15 @@ campos desejados no HTML da página.
     http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
 }}
 
-\todofootnote{Uma página de resultado da consulta pública do subdomínio ww4 do
-TJ-RJ para um número de processo válido~\footnote{\urlProcValido}
+Uma página de resultado da consulta pública do subdomínio ww4 do TJ-RJ para um
+número de processo válido\footnote{\urlProcValido}
 (\Cref{fig:exemplo-pagina-ww4}) apresenta os campos dos dados do processo em
 uma \textit{tag} HTML \texttt{<table>}, de forma que cada linha visual
 corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
 \texttt{td}: uma para o nome do campo e outra para o valor
 (\Cref{cod:html-assunto}). Assim, um campo ``A'' pode ser encontrado procurando
 por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho em
-relação à hierarquia do HTML da página.}{Este parágrafo deve ficar no capítulo
-de implementação ou de construção?} A expressão XPath que representa esse
+relação à hierarquia do HTML da página. A expressão XPath que representa esse
 padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
 (\Cref{cod:extract_field}), que extrai o valor de um campo arbitrário em uma
 resposta contendo uma página HTML conforme a seguinte ideia:
@@ -138,11 +222,16 @@ expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
 \begin{figure}[htb]
     \centering
     \begin{tikzpicture}
+        \pgfplotstableread{io_stats-batch-size.csv}{\table}
+        \pgfplotstablegetcolsof{\table}
+        \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+        \pgfplotstablegetcolumnnamebyindex{0}\of{\table}\to{\colprincipal}
         \begin{axis}[
             ybar,
-            xmin=-20,
-            xmax=130,
-            xtick={10, 100, 1000},
+            enlarge x limits=0.15,
+            symbolic x coords={
+                10, 100, 500, 1000
+            },
             ylabel={Tempo (s)},
             xlabel={Tamanho do bloco},
             legend cell align=left,
@@ -150,10 +239,11 @@ expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
                 legend pos=outer north east,
                 cells={align=left},
             },
+            xtick=data,
+            xticklabels from table={\table}{\colprincipal},
+            width=0.7\textwidth,
+            clip=false,
         ]
-            \pgfplotstableread{io_stats-batch-size.csv}{\table}
-            \pgfplotstablegetcolsof{\table}
-            \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
             \pgfplotsinvokeforeach{1,...,\numberofcols}{
                 \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
                 \addplot table [y index=#1] {\table};
@@ -249,3 +339,71 @@ busca por processos respectivamente de forma síncrona e assíncrona.
     }
     \label{lst:requisição-processos-síncrona-e-assíncrona}
 \end{listing}
+
+\subsection{Cache}
+
+A \textit{cache} foi implementada como um instância de banco de dados
+SQLite~\cite{tool:sqlite} com uma única tabela ``Processos'' (reproduzida na
+\Cref{tbl:estrutura-tabela-processos}), com a descrição dos valores possíveis
+para a coluna \textit{``cache\_state''} descritos
+na~\Cref{tbl:valores-coluna-state}. A chave primária da tabela foi escolhida
+como o número do processo seguindo a numeração unificada, visto que é uma
+informação única a cada processo e, convenientemente, é o parâmetro de busca
+utilizado na extração, facilitando a separação de quais processos serão
+buscados na \textit{cache} e quais serão requisitados ao servidores dos TJs.
+
+\begin{table}[htb]
+    \small
+    \centering
+    \begin{tabular}{llp{0.6\textwidth}}
+        \toprule
+        \multicolumn{3}{c}{Processos} \\
+        \midrule
+        Coluna & Tipo & Descrição \\
+        \midrule \\
+        *\texttt{id} & text & Número do processo no padrão unificado. \\
+        \texttt{cache\_state} & text & Estado atual do processo na \textit{cache}. \\
+        \texttt{assunto} & text & Assunto do processo. \\
+        \texttt{json} & text & Dados do processo no formato JSON espelhando os campos retornados pela API do ww3. \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
+        ``*'' indica que o campo é uma chave primária.
+    }
+    \label{tbl:estrutura-tabela-processos}
+\end{table}
+
+\begin{table}[htb]
+    \centering
+    \begin{tabular}{lp{0.8\textwidth}}
+        \toprule
+        Estado & Descrição \\
+        \midrule \\
+        \texttt{CACHED} & O número do processo é válido e os dados do processo estão na \textit{cache}. \\
+        \texttt{INVALID} & O número do processo é inválido (por exemplo, dígitos de validação não conferem pelo algoritmo do TJ). \\
+        \texttt{NOT\_CACHED} & O número do processo é válido porém os dados dele não estão na \textit{cache}. Para uso no software, não é registrado na \textit{cache}. \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
+        ``*'' indica que o campo é uma chave primária.
+    }
+    \label{tbl:valores-coluna-state}
+\end{table}
+
+Essa separação é uma operação trivial: para saber se um processo deve ou não
+ser requisitado aos servidores dos TJs, basta para cada número de processo da
+lista de números a serem buscados consultar, na \textit{cache}, se não existe
+uma entrada com esse número como valor da chave primária e que o valor de
+``cache\_state'' seja ``CACHED''.
+
+Um processo sempre é salvo na \textit{cache} quando o servidor do TJ responde à
+requisição referente a uma consulta por número de processo, com exceção de
+casos em que a resposta é um erro de captcha.
+
+\todo{Falar sobre quando um processo é cacheado e quando não é}
+
+\section{Implementação das interfaces}
+
+\subsection{}

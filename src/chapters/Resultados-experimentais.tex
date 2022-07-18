@@ -25,3 +25,48 @@ processamento em um segundo deixar muitos processos pendentes, no caso)}}
     (através de caching e através de requisições assíncronas) do gasto com IO o
     tempo de consulta se reduz de forma diretamente proporcional.
 }
+
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \begin{axis}[
+            ybar,
+            xmin=-20,
+            xmax=130,
+            xtick={10, 100, 1000},
+            ylabel={Tempo (s)},
+            xlabel={Tamanho do bloco},
+            legend cell align=left,
+            legend style={
+                legend pos=outer north east,
+                cells={align=left},
+            },
+        ]
+            \pgfplotstableread{io_stats-async-sync.csv}{\table}
+            \pgfplotstablegetcolsof{\table}
+            \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+            \pgfplotsinvokeforeach{1,...,\numberofcols}{
+                \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
+                \addplot table [y index=#1] {\table};
+                \addlegendentryexpanded{\colname}
+            }
+        \end{axis}
+    \end{tikzpicture}
+    \caption{%
+      Comparativo de tempo desprendido com IO de Rede e processamento em CPU
+      entre o cenário com e sem a aplicação de programação assíncrona via IO
+      não-bloqueante (Async e Sync, respectivamente).
+    }
+    \label{gra:tempos-async-vs-sync}
+\end{figure}
+
+\todo{%
+  Nos resultados experimentais, ver se o tempo médio de obtenção de processos
+  ficou nessa linha dos 0.16ms lá.
+}
+
+\begin{todolist}
+    \item Adicionar gráfico comparando o uso da cache para a mesma consulta com
+          quando ela é feita com e sem caching.
+\end{todolist}

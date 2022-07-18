@@ -23,55 +23,6 @@ será considerada satisfatória se:
         personalizadas neles, tais como busca por assunto.
 \end{itemize}
 
-\section{Ferramentas utilizadas~\label{section:ferramentas-utilizadas}}
-
-\textcolor{blue}{--->> O que estás propondo para descrição de ferramentas
-(Scrapy e SQLLite) será um pequeno parágrafo de uma Seção chamada "Ferramentas
-utilizadas" no capítulo de construção da ferramenta. Não vais descrever nenhuma
-delas com detalhes, pois são ferramentas simplesmente usadas para contruíres
-teu trabalho. Isso não se detalha porque não são "conceitos". Ferramentas mudam
-de versão, saem de linha, ficam obsoletas, perdem valor, etc, portanto, não se
-descrevem em detalhes.}
-
-\todo{%
-    Esta seção deve ser uma descrição das ferramentas mais relevantes que foram
-    \textit{utilizadas} no trabalho, i.e. as dependências (bibliotecas,
-    linguagem de programação).
-}
-\begin{todolist}
-    \item Python 3.10 (listar motivos: incluir que não precisa de otimizações
-        agressivas do compilador pois o gargalo é IO de rede). Frisar as
-        palavras \textbf(``Critérios Técnicos'').
-    \item Scrapy
-    \item SQLite
-    \item \ldots
-\end{todolist}
-
-\section{Organização geral}
-
-\begin{todolist}
-    \item Diagramar módulos;
-\end{todolist}
-
-A ferramenta foi projetada como uma biblioteca de \textit{software} acompanhada
-de duas interfaces de usuário~\footnote{Nesta seção, ``usuário'' refere-se a
-alguém que não esteja utilizando a ferramenta como uma biblioteca de software,
-e sim como aplicação.}: uma aplicação de Interface de Linha de Comando
-(ILC\footnote{Comumente referenciado com a sigla em inglês ``CLI'', de
-``Command Line Interface''.}) e uma aplicação de servidor Web.
-
-A ILC tem como objetivo permitir o uso de boa parte dos diferentes recursos da
-biblioteca em um terminal para a execução tarefas pontuais, como exibir
-informações sobre estado atual da \textit{cache}, iniciar um processo de
-extração, ou mesmo iniciar uma instância de servidor Web da ferramenta para
-fins de desenvolvimento.
-
-O servidor Web é destinado ao usuário que queira uma interface de simples
-acesso e uso da ferramenta, primariamente focando na obtenção de dados dos TJs
-com os recursos que não estejam disponíveis nas páginas oficiais dos TJs
-(descritos na~\Cref{sec:Motivação-e-Contexto}), tendo em mente como público
-alvo jornalistas.
-
 \section{Estratégias de extração}
 
 O TJ-RJ possui rotas e subdomínios que dão acesso aos mesmos dados de processos
@@ -93,7 +44,7 @@ número do processo por conta do domínio de valores válidos ser limitado e
 conhecido: números de processos são dados seguindo os formatos numéricos fixos
 \textbf{unificado} e \textbf{antigo}.
 
-\begin{table}[tb]
+\begin{table}[htb]
     \centering
     \begin{tabular}{lp{0.65\textwidth}}
         \toprule
@@ -155,9 +106,9 @@ além do TJ-RJ do ponto de vista de implementação da ferramenta, quanto por
 algumas unidades de origem que possuem seu código de 4 dígitos não terem um
 espelho com 3 dígitos~\cite{spec:tjrj-codigos-unidades-de-origem}. Além disso,
 há também o fator de serialidade do campo ``N'' na numeração unificada, que
-permite saber que a partir do primeiro processo inexistente encontrado a busca
-pode ser finalizada concluindo-se que todos os processos daquele TJ registrados
-até o momento no sistema foram encontrados.
+permite saber que a partir do primeiro número de processo que não corresponda a
+um processo existente a busca pode ser finalizada concluindo-se que todos os
+processos daquele TJ registrados até o momento no sistema foram encontrados.
 
 Os demais métodos de busca, como via nome das partes, possuem uma abrangência
 de valores muito grande e difícil de se conhecer em sua totalidade ou, nos
@@ -169,7 +120,7 @@ combinações de valores de entrada, dar acesso a todos os processos registrados
 
 Os resultados de consulta processual do TJ-RJ em HTML são os das requisições
 feitas ao subdomínio \url{ww4.tjrj.jus.br}. Em uma URL de visualização de um
-processo um válido~\footnote{Exemplo de URL de processo válido:
+processo um válido\footnote{Exemplo de URL de processo válido:
 \url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9}.}
 nesse subdomínio (\Cref{fig:exemplo-pagina-ww4}), o parâmetro de URL
 (\textit{query string}) \texttt{numProcesso} identifica o número do processo na
@@ -177,9 +128,9 @@ numeração antiga. A estratégia de extração dos processos disponibilizados p
 esse subdomínio é efetuar requisições para a mesma URL variando apenas esse
 parâmetro com um número de processo diferente utilizando a numeração
 \textbf{antiga}. Cada requisição pode retornar uma página de processo válido,
-inexistente~\footnote{Exemplo de URL de processo inexistente:
+inexistente\footnote{Exemplo de URL de processo inexistente:
 \url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2020.004.015548-9}.},
-de numeração inválida~\footnote{Exemplo de URL de processo inválido:
+de numeração inválida\footnote{Exemplo de URL de processo inválido:
 \url{https://www4.tjrj.jus.br/consultaProcessoWebV2/consultaMov.do?numProcesso=0}.}
 ou de Captcha (caso esteja fora do horário noturno).
 
@@ -189,12 +140,13 @@ HTML. Já as páginas de erro são identificáveis ora pelo seu título e ora pe
 conteúdo com textos como ``Erro'' e ``Parâmetro Incorreto''
 (\Cref{fig:exemplo-tjrj-pagina-erro}).
 
-Por fim, ainda que o subdomínio ww4 também permita a busca por numeração única,
-ao acessar o resultado de um processo válido se chega à mesma página da busca
-por numeração antiga com o valor do parâmetro de URL \texttt{numProcesso}
-também na numeração antiga, e portanto não bastaria apenas variar o valor desse
-parâmetro com testes no formato da numeração única. É possível, contudo,
-aplicar a mesma tática de requisições em duas etapas descrita
+Há um porém: ainda que o subdomínio ww4 também permita pela sua interface Web a
+busca por numeração única, o resultado em caso de um processo válido é o
+redirecionamento à mesma página de caso a busca fosse feita por numeração
+antiga, com o valor do parâmetro de URL \texttt{numProcesso} também na
+numeração antiga. Portanto, não bastaria apenas variar o valor desse parâmetro
+com testes no formato da numeração única. É possível, contudo, aplicar a mesma
+tática de requisições em duas etapas descrita
 na~\Cref{sub:estrategia-api-json}.
 
 \begin{figure}[H]
@@ -218,41 +170,30 @@ na~\Cref{sub:estrategia-api-json}.
 
 \subsection{Estratégia alternativa: varredura com API JSON\label{sub:estrategia-api-json}}
 
-\begin{todolist}
-    \item Explicar rapidamente sobre a filtragem dos campos;
-\end{todolist}
-
 \urldef\urlConsultaJson\url{https://www3.tjrj.jus.br/consultaprocessual/#%2Fconsultapublica%23porNumero=}
 
 No subdomínio \url{ww3.tjrj.jus.br}, há uma página de
-busca~\footnote{\urlConsultaJson} semelhante à oferecida no subdomínio
-\url{ww4.tjrj.jus.br}, também fornecendo os dados em HTML. A diferença está que
-em vez de o servidor responder com o HTML completo e pronto para o lado cliente
+busca\footnote{Rota da página de consulta: \urlConsultaJson} semelhante à oferecida no subdomínio
+\url{ww4.tjrj.jus.br}, também fornecendo os dados em HTML. A diferença é que em
+vez de o servidor responder com o HTML completo e pronto para o lado cliente
 renderizar como uma página nova (que é o caso do subdomínio ww4), no subdomínio
 ww3 ao se acionar o botão de busca o cliente envia uma requisição AJAX para uma
 API do servidor, que responde com um objeto JSON com os dados do processo e
-então o HTML é atualizado no lado cliente de forma dinâmica. A estratégia então
-nesse caso passa a ser trivial: a partir do número de um processo, enviar uma
-requisição para a tal API e, com os dados de um processo em JSON, basta
-investigar quais os campos retornados, filtrar os de interesse e exportar da
-forma desejada.
+então o HTML é atualizado no lado cliente de forma dinâmica. A estratégia para
+descoberta e aquisição dos campos então nesse caso passa a ser trivial: a
+partir do número de um processo, enviar uma requisição para a tal API e, com os
+dados de um processo em JSON, basta investigar quais os campos retornados,
+filtrar os de interesse e exportar da forma desejada.
 
 A API do servidor do TJ-RJ possui rotas específicas para consultas pela
-numeração unificada~\footnote{Rota para consulta pela numeração unificada:
+numeração unificada\footnote{Rota para consulta pela numeração unificada:
 \url{https://www3.tjrj.jus.br/consultaprocessual/api/processos/por-numeracao-unica}}
-e pela antiga~\footnote{Rota para consulta pela numeração antiga:
+e pela antiga\footnote{Rota para consulta pela numeração antiga:
 \url{http://www3.tjrj.jus.br/consultaprocessual/api/processos/por-numero/publica}},
 ambas respondendo com dados de um processo através de requisições POST
-utilizando \textit{query strings} para especificar os parâmetros de busca.
-Os tipos de resultados de ambas as rotas encontrados durante a construção desta
+utilizando parâmetros de URL para especificar os parâmetros de busca. Os tipos
+de resultados de ambas as rotas encontrados durante a construção desta
 ferramenta estão expostos na~\Cref{tbl:respostas-ww3}.
-
-\begin{todolist}
-    \item Passar a parte de implementação para o capítulo de implementação;
-    \item Comentar que na numeração única as respostas são listas conforme
-        processos em instâncias diferentes.
-    \item Explicar as requisições em 2 etapas.
-\end{todolist}
 
 \begin{table}[htb]
     \tiny
@@ -261,7 +202,7 @@ ferramenta estão expostos na~\Cref{tbl:respostas-ww3}.
         \toprule
         \multicolumn{2}{c}{Respostas comuns às consultas por numeração antiga e unificada} \\
         \midrule
-        \textit{Query String} & Resposta (JSON) \\
+        Parâmetros de URL no formato de \textit{Query String} & Resposta (JSON) \\
         \midrule
         \texttt{tipoProcesso=1\&codigoProcesso=0} & \mintinline{json}{["O processo informado não foi encontrado."]} \\
         \texttt{tipoProcesso=1\&codigoProcesso=abc} & \mintinline{json}{["Número do processo inválido."]} \\
@@ -282,14 +223,17 @@ ferramenta estão expostos na~\Cref{tbl:respostas-ww3}.
         \bottomrule
     \end{tabular}
     \caption{%
-        Respostas dadas pela API do \url{ww3.tjrj.jus.br} conforme diferentes valores na \textit{query string}.
+        Respostas dadas pela API do \url{ww3.tjrj.jus.br} conforme diferentes
+        valores na \textit{query string}. Objetos com os dados dos processos
+        foram truncados para facilitar a leitura da tabela.
     }
     \label{tbl:respostas-ww3}
 \end{table}
 
 A resposta em formato JSON para busca pela numeração unificada, em caso de um
 número válido de um processo existente, é uma lista com um objeto para cada
-instância daquele processo e apenas alguns, e não todos, os campos úteis. Já a
+instância daquele processo (identificada através do campo
+\texttt{tipoProcesso}) e apenas alguns, mas não todos, os campos úteis. Já a
 resposta da busca pela numeração antiga é um único objeto com todos os campos
 úteis do processo.
 
@@ -297,8 +241,8 @@ Conforme os motivos citados anteriormente para preferência pela busca por
 numeração unificada, ela é utilizada para a descoberta de novos processos, mas
 sendo incapaz de fornecer todos os dados do processo quando é encontrado um
 processo existente, uma requisição adicional para a rota da busca por numeração
-antiga é necessária. Para isso, se aproveita do fato de que o campo
-\texttt{numProcesso} dos objetos JSON da resposta da numeração unificada é o
+antiga é necessária. Para isso, se aproveita do fato de que os objetos JSON da
+resposta da numeração unificada possuem um campo \texttt{numProcesso} com o
 número equivalente daquele processo na numeração antiga. Com a resposta dessa
 requisição adicional, selecionam-se os campos úteis de acordo com a relação
 exposta na~\Cref{tbl:relação-chaves-campos-json}.
@@ -342,18 +286,17 @@ para serem testadas para cada um dos 7 dígitos em ``NNNNNNN''.} possibilidades
 da numeração unificada em um período arbitrário, o tempo médio para se obter 1
 processo válido deve ser no máximo $0.67ms$ para menos de 30
 dias\footnote{Aproveitando as 6h do horário noturno durante 30 dias: $\lceil
-\frac{30 \times 6 \times 3600s}{97 \times 10^7} \rceil = \sim0.67ms$} e
+\frac{30 \times 6 \times 3600s}{97 \times 10^7} \rceil \simeq 0.67ms$} e
 $0.16ms$ para menos de 7 dias. Ou seja, para não tornar o uso da ferramenta
-inviável, é importante que o tempo de obtenção de dados de processos não supere
-tais valores. \todo{Nos resultados experimentais, ver se o tempo médio de
-obtenção de processos ficou nessa linha.}
+inviável, foram implementadas estratégias para acelerar o tempo de obtenção de
+dados de processos visando que não supere muito tais valores.
 
-\subsection{Requisições assíncronas}
+\subsection{Requisições assíncronas~\label{sub:requisições-assíncronas}}
 
 O tempo desprendido na busca por processos com operações de IO de rede,
 especialmente na espera pela resposta do servidor, cresce consideravelmente com
-o nº de processos buscados (\Cref{gra:tempo-io-por-num-processos}). Sendo
-assim, esta estratégia visa reduzir esse tempo aproveitando recursos de
+a quantidade de processos buscados (\Cref{gra:tempo-io-por-num-processos}).
+Sendo assim, esta estratégia visa reduzir esse tempo aproveitando recursos de
 programação assíncrona para que apenas o envio das requisições e o tratamento
 da resposta sejam sequenciais entre si, porém paralelos com relação às
 operações de IO (via IO não-bloqueante).
@@ -474,91 +417,24 @@ modelo assíncrono em que todas são tratadas nesse mesmo passo de tempo.
 
 \subsection{\textit{Cache} dos resultados}
 
-\begin{todolist}
-    \item Justificar a necessidade de \textit{cache} para os resultados: em
-          resumo, requisições, sejam de um mesmo usuário ou de usuários
-          diferentes, podem muito bem conter uma intersecção dos processos que
-          serão buscados.
-    \item Adicionar gráfico comparando o uso da cache para a mesma consulta com
-          quando ela é feita com e sem caching.
-\end{todolist}
+Considerando que diferentes consultas pela ferramenta podem ser feitas, existe
+um retrabalho quando elas possuem uma intersecção no conjunto de processos que
+retornariam. A estratégia para atacar esse problema consiste em guardar os
+processos descobertos em um banco de dados local simples, funcionando como uma
+\textit{cache} para os processos já conhecidos, visto que uma primeira
+busca atendida já trará alguns dos processos da(s) próxima(s), não precisando
+ser buscados novamente por requisições ao servidor do TJ-RJ já que estarão
+prontos no banco de dados da ferramenta. Há também uma vantagem adicional com
+relação a descoberta de processos válidos uma vez que, conhecidos todos os
+processos de um único ano, não é necessário gastar tempo descobrindo quais
+números de processos correspondem a processos reais.
 
-Dado o tempo para realizar uma busca por todos os processos, é inviável que ela
-reacesse o servidor dos TJs para cada consulta realizada na ferramenta. A
-estratégia para atacar esse problema consiste em guardar os processos
-previamente buscados em um banco de dados simples, funcionando como uma
-\textit{cache} para os processos já conhecidos. A \textit{cache} acaba sendo
-útil também para diferentes requisições em que seus intervalos de números de
-processos se interseccionem, visto que a primeira requisição atendida já trará
-alguns dos processos da(s) próxima(s), não precisando ser re-buscados por
-requisições ao servidor do TJ-RJ já que estarão prontos no banco de dados da
-ferramenta. Há também uma vantagem adicional com relação a descoberta de
-processos válidos uma vez que, conhecidos todos os processos de um único ano,
-não é necessário gastar tempo descobrindo quais números de processos
-correspondem a processos reais.
-
-A \textit{cache} foi implementada como um instância de banco de dados
-SQLite~\cite{tool:sqlite} com uma única tabela ``Processos'' (reproduzida na
-\Cref{tbl:estrutura-tabela-processos}), com a descrição dos valores possíveis
-para a coluna \textit{``cache\_state''} descritos
-na~\Cref{tbl:valores-coluna-state}. A chave primária da tabela foi escolhida
-como o número do processo seguindo a numeração unificada, visto que é uma
-informação única a cada processo e, convenientemente, é o parâmetro de busca
-utilizado na extração, facilitando a separação de quais processos serão
-buscados na \textit{cache} e quais serão requisitados ao servidores dos TJs.
-
-\begin{table}[htb]
-    \small
-    \centering
-    \begin{tabular}{llp{0.6\textwidth}}
-        \toprule
-        \multicolumn{3}{c}{Processos} \\
-        \midrule
-        Coluna & Tipo & Descrição \\
-        \midrule \\
-        *\texttt{id} & text & Número do processo no padrão unificado. \\
-        \texttt{cache\_state} & text & Estado atual do processo na \textit{cache}. \\
-        \texttt{assunto} & text & Assunto do processo. \\
-        \texttt{json} & text & Dados do processo no formato JSON espelhando os campos retornados pela API do ww3. \\
-        \bottomrule
-    \end{tabular}
-    \caption{%
-        Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
-        ``*'' indica que o campo é uma chave primária.
-    }
-    \label{tbl:estrutura-tabela-processos}
-\end{table}
-
-\begin{table}[htb]
-    \centering
-    \begin{tabular}{lp{0.8\textwidth}}
-        \toprule
-        Estado & Descrição \\
-        \midrule \\
-        \texttt{CACHED} & O número do processo é válido e os dados do processo estão na \textit{cache}. \\
-        \texttt{INVALID} & O número do processo é inválido (por exemplo, dígitos de validação não conferem pelo algoritmo do TJ). \\
-        \texttt{NOT\_CACHED} & O número do processo é válido porém os dados dele não estão na \textit{cache}. Para uso no software, não é registrado na \textit{cache}. \\
-        \bottomrule
-    \end{tabular}
-    \caption{%
-        Definição da tabela SQLite ``Processos'' utilizada para \textit{cache}.
-        ``*'' indica que o campo é uma chave primária.
-    }
-    \label{tbl:valores-coluna-state}
-\end{table}
-
-Essa separação é uma operação trivial: para saber se um processo deve ou não
-ser requisitado aos servidores dos TJs, basta para cada número de processo da
-lista de números a serem buscados consultar, na \textit{cache}, se não existe
-uma entrada com esse número como valor da chave primária e que o valor de
-``cache\_state'' seja ``CACHED''.
-
-Um processo sempre é salvo na \textit{cache} quando o servidor do TJ responde à
-requisição referente a uma consulta por número de processo, com exceção de
-casos em que a resposta é um erro de captcha.
-
-\todo{Falar sobre quando um processo é cacheado e quando não é}
-
-\section{Estratégias adicionais}
-
-\subsection{Filtragem dos resultados}
+A \textit{cache} também permite que o processo de aquisição de processos seja
+elaborado em duas etapas: uma de descoberta de processos e outra de exportação.
+Um benefício disso se reflete em consultas personalizadas que realizem algum
+tipo de filtragem dos resultados, uma vez que os processos descobertos em vez
+de descartados podem ser salvos na \textit{cache} e reutilizado em outra
+consulta --- seja esta filtrada ou não. Outro se dá com o horário de operação
+da ferramenta: se apenas no horário noturno processos podem ser acessados no
+TJ-RJ, com a \textit{cache} eles passam a estar disponíveis em qualquer período
+desde que já tenham sido salvos anteriormente.
