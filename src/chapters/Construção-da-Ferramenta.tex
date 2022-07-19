@@ -118,10 +118,13 @@ combinações de valores de entrada, dar acesso a todos os processos registrados
 
 \subsection{Estratégia inicial: extração HTML}
 
+\newcommand{\urlProcValido}{\url{%
+    http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
+}}
+
 Os resultados de consulta processual do TJ-RJ em HTML são os das requisições
 feitas ao subdomínio \url{ww4.tjrj.jus.br}. Em uma URL de visualização de um
-processo um válido\footnote{Exemplo de URL de processo válido:
-\url{http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9}.}
+processo um válido\footnote{Exemplo de URL de processo válido: \urlProcValido.}
 nesse subdomínio (\Cref{fig:exemplo-pagina-ww4}), o parâmetro de URL
 (\textit{query string}) \texttt{numProcesso} identifica o número do processo na
 numeração antiga. A estratégia de extração dos processos disponibilizados por

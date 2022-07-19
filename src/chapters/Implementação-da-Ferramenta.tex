@@ -29,17 +29,23 @@ próprio \tjscraper, fossem Software-Livre por, além de outros fatores, questõ
 de reprodutibilidade e auditoria.
 
 Para a implementação da \tjscraper, escolheu-se Python 3.10 como linguagem
-principal considerando os seguintes critérios técnicos: a premissa de que o
-gargalo do tempo de busca seria o de IO de Rede (para busca dos processos nos
-servidores dos TJs) ou de Armazenamento (para buscas na \textit{cache}); não se
-tratando de um problema inerentemente atrelado à CPU\footnote{Tradução livre
-para o termo em inglês ``\textit{CPU-bound}''.}, não seriam prioritárias
-otimizações agressivas de compilador tanto AOT nem
-JIT\footnote{``Ahead-Of-Time'' --- antes da execução do programa --- e
-``Just-In-Time'' --- durante a execução do programa ---, respectivamente.};
-familiaridade do autor com a linguagem; disponibilidade de recursos de
-abstração de alto-nível na biblioteca padrão da linguagem ou em bibliotecas
-externas para as principais operações da ferramenta.
+principal considerando os seguintes critérios técnicos:
+
+\begin{enumerate}
+    \item A premissa de que o gargalo do tempo de busca seria o de IO de Rede
+        (para busca dos processos nos servidores dos TJs) ou de Armazenamento
+        (para buscas na \textit{cache});
+    \item Não se tratando de um problema inerentemente atrelado à
+        CPU\footnote{Tradução livre para o termo em inglês
+        ``\textit{CPU-bound}''.}, não seriam prioritárias otimizações
+        agressivas de compilador tanto AOT nem JIT\footnote{``Ahead-Of-Time''
+        --- antes da execução do programa --- e ``Just-In-Time'' --- durante a
+        execução do programa ---, respectivamente.};
+    \item Familiaridade do autor com a linguagem;
+    \item Disponibilidade de recursos de abstração de alto-nível na biblioteca
+        padrão da linguagem ou em bibliotecas externas para as principais
+        operações da ferramenta.
+\end{enumerate}
 
 O gerenciamento de dependências e isolamento do ambiente de desenvolvimento foi
 feito utilizando \cite{about:poetry} visando tanto a reprodutibilidade dos
@@ -52,12 +58,13 @@ Das implementações de extração: como a estratégia inicial visa a extração
 páginas HTML, \cite{lib:scrapy} foi utilizada por resolver essa demanda com
 recursos que visam facilitar tarefas comuns em raspagem de dados, enquanto a
 extração via API JSON utilizou-se puramente de recursos nativos da biblioteca
-padrão de Python. Do armazenamento, a \textit{cache} foi implementada como um
-banco de dados SQLite~\cite{tool:sqlite}. Da exportação, foram utilizados os
-formatos JSONLines como intermediário (visando facilitar a sua manipulação por
-outras bibliotecas e ser simples de gerar e exportar para outros formatos) e
-XLSX para visualização e manipulação por usuários via outros softwares que
-suportem o formato.
+padrão de Python em boa parte das operações e a biblioteca~\cite{lib:aiohttp}
+para as requisições assíncronas. Do armazenamento, a \textit{cache} foi
+implementada como um banco de dados~\cite{tool:sqlite}. Da exportação, foram
+utilizados os formatos JSONLines~\cite{spec:jsonlines} como intermediário
+(visando facilitar a sua manipulação por outras bibliotecas e ser simples de
+gerar e exportar para outros formatos) e XLSX para visualização e manipulação
+por usuários via outros softwares que suportem o formato.
 
 
 \section{Implementação das estratégias}
@@ -106,8 +113,8 @@ determinados como:
     \item Dado um intervalo de números de processos (no formato unificado ou
         antigo), as URLs correspondentes a cada um dos valores nele são
         montadas e repassadas para uma \textit{spider}\footnote{Mecanismo
-        interno do Scrapy que reorganiza, escalona e efetua requisições e
-        repassa à função de tratamento de suas respostas.} do Scrapy;
+        interno do Scrapy que reorganiza, escalona e lança as requisições
+        repassando suas respostas à função de tratamento.} do Scrapy;
     \item \label{step-1} Cada URL passada irá eventualmente, em alguma ordem, chamar o método
         \texttt{parse} da \textit{spider}, e nele é extraído o conteúdo de uma
         página seguindo os passos:
@@ -123,26 +130,19 @@ determinados como:
 
 Para os passos do~\cref{step-1}, utilizou-se a especificação~\cite{spec:xpath}
 suportada nativamente pelo Scrapy para a busca dos padrões de resultado e de
-campos desejados no HTML da página.
-
-\todo{Especificar XPath para páginas de erro.}
-
-\newcommand{\urlProcValido}{\url{%
-    http://www4.tjrj.jus.br/consultaProcessoWebV2/consultaProc.do?numProcesso=2021.004.015548-9
-}}
+campos desejados no HTML da página avaliando a estrutura interna da página.
 
 Uma página de resultado da consulta pública do subdomínio ww4 do TJ-RJ para um
-número de processo válido\footnote{\urlProcValido}
-(\Cref{fig:exemplo-pagina-ww4}) apresenta os campos dos dados do processo em
-uma \textit{tag} HTML \texttt{<table>}, de forma que cada linha visual
-corresponde a uma \textit{tag} \texttt{tr} composta por duas \textit{tags}
-\texttt{td}: uma para o nome do campo e outra para o valor
-(\Cref{cod:html-assunto}). Assim, um campo ``A'' pode ser encontrado procurando
-por uma \texttt{td} cujo conteúdo seja ``A:'', e o valor é o próximo vizinho em
-relação à hierarquia do HTML da página. A expressão XPath que representa esse
-padrão é utilizada na função \mintinline{python}{extract_field(field_text)}
-(\Cref{cod:extract_field}), que extrai o valor de um campo arbitrário em uma
-resposta contendo uma página HTML conforme a seguinte ideia:
+número de processo válido apresenta os campos dos dados do processo em uma
+\textit{tag} HTML \texttt{<table>} com cada linha visual correspondendo a uma
+\textit{tag} \texttt{tr} composta por duas \textit{tags} \texttt{td}: uma para
+o nome do campo e outra para o valor (\Cref{cod:html-assunto}). Assim, um campo
+``A'' pode ser encontrado procurando por uma \texttt{td} cujo conteúdo seja
+``A:'', e o valor é o próximo vizinho em relação à hierarquia do HTML da
+página. A expressão XPath que representa esse padrão é utilizada na função
+\mintinline{python}{extract_field(field_text)} (\Cref{cod:extract_field}), que
+extrai o valor de um campo arbitrário em uma resposta contendo uma página HTML
+conforme a seguinte ideia:
 
 \begin{enumerate}
     \item \texttt{//}: Define que o item buscado pode estar em qualquer ponto
@@ -150,7 +150,9 @@ resposta contendo uma página HTML conforme a seguinte ideia:
         variações na hierarquia HTML da página prejudiquem a busca.
     \item \texttt{td[text()='TEXTO:']}: Busca e seleciona um item da
         \textit{tag} \texttt{<td>} que tenha como conteúdo exatamente a
-        \textit{string} ``TEXTO:''.
+        \textit{string} ``TEXTO:''. Na função \texttt{extract\_field},
+        ``TEXTO'' é substituído pelo argumento enviado ao parâmetro
+        \texttt{field\_text}.
     \item \texttt{/following-sibling::td}: Se foi encontrado o item, então será
         seleciona o próximo vizinho de mesmo nível hierárquico que seja da
         \textit{tag} \texttt{<td>}.
@@ -159,12 +161,6 @@ resposta contendo uma página HTML conforme a seguinte ideia:
         valor retornado pela busca.
 \end{enumerate}
 
-
-Finalizada a extração dos campos e tendo então os dados de um processo, eles
-são então exportados como uma linha adicional em um arquivo no
-formato~\cite{spec:jsonlines}. Ao final de uma varredura por um intervalo de
-número de processos, o arquivo contém os dados de todos os processos processos
-dele.
 
 \begin{listing}
     \centering{}
@@ -180,6 +176,34 @@ dele.
     \label{cod:html-assunto}
 \end{listing}
 
+
+Para a detecção de páginas de erro, as expressões correspondentes e a ação que
+é realizada em cima delas para verificação do erro estão descritas
+na~\Cref{tbl:xpaths-de-erros}.
+
+\begin{table}[htb]
+    \begin{tabular}{lll}
+        \toprule
+        Erro & Verificação complementar & XPath \\
+        \midrule
+        Página de \textit{Captcha} & Existência do elemento. & \mintinline{text}{//*[@id="container_captcha"]} \\
+        Número inválido & Valor é exatamente ``erro''. & \texttt{//title/text()} \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Expressões XPath e qual operação de verificação é realizada em cima de
+        seus resultados para verificação de erro.
+    }
+    \label{tbl:xpaths-de-erros}
+\end{table}
+
+
+% Finalizada a extração dos campos e tendo então os dados de um processo, eles
+% são então exportados como uma linha adicional em um arquivo no
+% formato~\cite{spec:jsonlines}. Ao final de uma varredura por um intervalo de
+% número de processos, o arquivo contém os dados de todos os processos processos
+% dele.
+
 \begin{listing}[htb]
     \centering{}
     \begin{minted}[breaklines]{python}
@@ -194,151 +218,160 @@ dele.
     \label{cod:extract_field}
 \end{listing}
 
+\subsection{Extração de processos via API JSON e requisições assíncronas}
 
-\subsection{JSON}
+A função \mintinline{python}{download_with_json_api} do módulo
+\texttt{tj\_scraper.download} abstrai o processo de extração de dados de
+processos pela API JSON de TJs que conhecidamente a tenham. A implementação
+dessa função já faz proveito da estratégia de requisições assíncronas descrita
+na~\Cref{sub:requisições-assíncronas} e tem como parâmetros: uma especificação
+das combinações de números de processo na numeração unificada que serão
+testadas, composta pelo intervalo de valores que serão utilizados para
+preencher o campo ``NNNNNNN'', o TJ em questão e o ano; o arquivo
+JSONLines~\cite{spec:jsonlines} de saída que será preenchido com os dados dos
+processos extraídos; o caminho para a \textit{cache}; a função que será
+utilizada para filtrar os resultados; e o tamanho dos ``lotes'' (explicados
+mais à frente). O TJ passado por parâmetro contém as definições de suas rotas e
+unidades de origem previamente carregadas a partir de um arquivo
+TOML~\cite{spec:toml}. A definição das rotas é dada por uma rota para a
+numeração unificada e outra para a numeração antiga.
 
-\review{Os processos são exportados em um arquivo de resultados em formato~\cite{spec:jsonlines}}
+Adentrando na implementação do processo de extração, cuja ideia geral
+simplificada está resumida no~\Cref{alg:iteração-por-combinações}, criam-se via
+expressão geradora\footnote{Mecanismo de Python para iteração através de
+avaliação preguiçosa.} todas as requisições que serão enviadas ao servidor do
+TJ a partir da iteração pela especificação de combinações. Cada iteração gera
+uma combinação parcial em que se fixa, além dos demais campos previamente
+fixados na chamada da função\footnote{Mais claramente, como já são passados um
+TJ e um ano específico, os campos fixados previamente são ``J'', ``TR'' e
+``AAAA''.}, um valor para o campo ``NNNNNNN'' dado sequencialmente até que se
+chegue ao último valor do intervalo passado por parâmetro, mantendo variáveis
+apenas os campos de unidade de origem (``OOOO'') e dígitos de verificação
+(``DD'').
 
-\subsection{Assíncrona}
+Em seguida, para cada combinação parcial, varia-se o campo de ``OOOO'' para
+cada uma das unidades de origem do TJ em questão, ordenadas do menor para o
+maior número. A cada variação, monta-se a \textit{string} representante da
+numeração unificada e, então, uma primeira requisição de teste é enviada à rota
+correspondente do TJ. Utilizando a~\Cref{tbl:respostas-ww3} como referência, a
+resposta do servidor é classificada em um resultado de erro específico ou um
+processo válido. No caso de um processo válido, uma requisição adicional é
+enviada para a rota da numeração antiga do TJ para se extrair os campos úteis
+do processo conforme a~\Cref{tbl:relação-chaves-campos-json}. Para processos
+com múltiplas instâncias, apenas o da primeira instância é utilizado.
 
-\review{nativo de Python 3.5+, baseado em Corrotinas com \texttt{async/await}~\cite{spec:pep0492},}
-
-Como forma de evitar sobrecarga dos servidores dos TJs por um excesso de
-requisições em um período curto de tempo, evitando possíveis sanções de algum
-deles ou mesmo consumo excessivo de memória da máquina cliente devido à
-quantidade de objetos das Corrotinas instanciadas para as requisições, foi
-implementado um mecanismo limite de requisições simultâneas. O mecanismo
-funciona separando os IDs dos processos a serem buscados em ``passos'', em que
-cada passo dispara um número fixo de requisições e o próximo passo só é
-executado quando todas do atual tiverem sido tratadas. O tamanho (quantidade de
-processos por passo) adequado de passo escolhido como padrão foi de
-\todofootnote{100 processos}{Escolher valor melhor quando forem apresentados os
-resultados}. Resultados de ganhos para diferentes tamanhos de passo estão
-expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
-(\Cref{chp:Resultados-Experimentais}).
-
-\todo{Fazer comparativos para um intervalo grande de processos (100, 1000, 10000).}
-
-\begin{figure}[htb]
-    \centering
-    \begin{tikzpicture}
-        \pgfplotstableread{io_stats-batch-size.csv}{\table}
-        \pgfplotstablegetcolsof{\table}
-        \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
-        \pgfplotstablegetcolumnnamebyindex{0}\of{\table}\to{\colprincipal}
-        \begin{axis}[
-            ybar,
-            enlarge x limits=0.15,
-            symbolic x coords={
-                10, 100, 500, 1000
-            },
-            ylabel={Tempo (s)},
-            xlabel={Tamanho do bloco},
-            legend cell align=left,
-            legend style={
-                legend pos=outer north east,
-                cells={align=left},
-            },
-            xtick=data,
-            xticklabels from table={\table}{\colprincipal},
-            width=0.7\textwidth,
-            clip=false,
-        ]
-            \pgfplotsinvokeforeach{1,...,\numberofcols}{
-                \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
-                \addplot table [y index=#1] {\table};
-                \addlegendentryexpanded{\colname}
+\begin{algorithm}
+    \Entrada{$N_i \geq 0, N_f \geq 0, A \geq 0$, um $TJ$ e uma função $Filtro$}
+    \Saida{Conjunto de processos $P$}
+    \ParaCada{$N \in [N_i, N_f]$}{
+        \ParaCada{$O \in UnidadesDeOrigem(TJ)$}{
+            $D \gets Modulo97(N, A, 8, Codigo(TJ))$\;
+            Gere $Num_{CNJ}$ como a numeração unificada preenchida com $(N, D, A, 8, Codigo(TJ), O)$\;
+            Envie uma requisição $R_1$ para a rota de numeração unificada de $TJ$ com $Num_{CNJ}$\;
+            \Se{$R_1$ responder com um processo válido}{
+                Extraia o campo de numeração antiga de $R_1$ e salve-o em $Num_{Antiga}$\;
+                Envie uma requisição $R_2$ para a rota de numeração antiga de $TJ$ com $Num_{Antiga}$\;
+                \Se{$R_2$ responder com sucesso}{
+                    Salve o processo contido em $R_2$ na \textit{cache} como válido\;
+                    \Se{$Filtro(R_2) = falso$}{
+                        Exporte $R_2$\;
+                    }
+                    Pare o \textit{loop} interno\;
+                }
             }
-        \end{axis}
-    \end{tikzpicture}
-    \caption{%
-        Comparação do tempo de obtenção de todos os processos de diferentes intervalos conforme tamanho do bloco.
+            Salve o processo contido em $R_2$ na \textit{cache} como inválido\;
+        }
     }
-    \label{gra:tempos-tamanhos-de-passo-async}
-\end{figure}
+    \caption{%
+        Extração de processos via API JSON (simplificada).
+    }
+    \label{alg:iteração-por-combinações}
+\end{algorithm}
 
-\todo{%
-    Em vez de gerar gráfico de sync/async (mover este para a parte de
-    resultados), gerar um gráfico para IO/step\_size.
-}
+% Async
 
-Para melhor visualização da implementação,
-a~\Cref{lst:requisição-processos-síncrona-e-assíncrona} reproduz, abstraindo as
-operações que não dizem respeito à programação assíncrona, o procedimento de
-busca por processos respectivamente de forma síncrona e assíncrona.
+Para realizar o disparo das requisições de forma assíncrona implementando a
+estratégia descrita na~\Cref{sub:requisições-assíncronas}, as funções internas
+chamadas pela \mintinline{python}{download_with_json_api} foram definidas
+segundo o modelo \textit{async/await} da biblioteca padrão de Python. O modelo,
+nativo de Python 3.5+ baseado em Corrotinas~\cite{spec:pep0492}, é responsável
+pelo caráter de IO não-bloqueante nas requisições e exige, para tal e portanto,
+que a biblioteca de requisições seja compatível com ele, justificando o uso da
+AIOHTTP. A~\Cref{cod:requisição-processos-síncrona-e-assíncrona} reproduz, com
+as devidas simplificações, o código da função responsável pela tentativa de
+descoberta de um processo a partir de um único número em que o método
+\mintinline{python}{aiohttp.ClientSession.post} envia uma requisição POST de
+forma assíncrona. Foi utilizado um objeto de sessão para reaproveitamento da
+conexão, visto que a intenção é disparar múltiplas requisições.
 
 \begin{listing}[htb]
+    \centering
     \tiny
-    \begin{minipage}[t]{0.5\textwidth}
-        \begin{minted}[gobble=12,breaklines]{python}
-            def fetch_process(
-                session: requests.Session,
-                url: str,
-                id_: str,
-            ) -> dict[str, Any]:
-                """
-                Busca um único processo com o número dado em
-                `id_` utilizando a API em `url`, filtrando
-                processos por um critério arbitrário (ex:
-                se contém um assunto específico).
-                """
-                response = session.post(
-                    url, json={"numProcesso": id_}
-                )
+    \begin{minted}[breaklines]{python}
+        async def fetch_process(
+            session: aiohttp.ClientSession,
+            cnj_number: CNJProcessNumber,
+            tj: TJ,
+        ) -> FetchResult:
+            cnj_number_str = make_cnj_number_str(cnj_number)
 
-                return classify_process(response.json())
+            request_args = TJRequestParams(tipoProcesso="1", codigoProcesso=cnj_number_str)
 
-            def download_processes(
-                url: str,
-                ids: list[str],
-                sink: Path,  # Onde os processos serão salvos
-            ) -> None:
-                """Salva todos os processos com determinados IDs em um arquivo JSONL."""
-                with requests.Session() as session:
-                    for id_ in ids:
-                        process = fetch_process(session, id)
-                        save_process(process, sink)
-        \end{minted}
-    \end{minipage}
-    \begin{minipage}[t]{0.6\textwidth}
-        \begin{minted}[gobble=12,breaklines]{python}
-            async def fetch_process(
-                session: aiohttp.ClientSession,
-                url: str,
-                id_: str,
-            ) -> dict[str, Any]:
-                """
-                Busca um único processo com o número dado em
-                `id_` utilizando a API em `url`.
-                """
-                response = requests.post(url, json={"numProcesso": id_})
+            # Descoberta do processo
+            raw_response: TJResponse
+            async with session.post(
+                tj.cnj_endpoint,
+                json=request_args,
+                ssl=False,
+            ) as response:
+                raw_response = json.loads(await response.text())
 
-                return classify_process(response.json(), filter_function)
+            fetch_result = classify(raw_response, cnj_number, tj)
 
-            async def download_processes(
-                url: str,
-                ids: list[str],
-                sink: Path,  # Onde os processos serão salvos
-                step_size: int,  # Número de processos por passo
-            ) -> None:
-                async with aiohttp.ClientSession() as session:
-                    for step_ids in iter_in_steps(ids, step_size):
-                        requests = (
-                            fetch_process(session, url, step_id)
-                            for step_id in step_ids
-                        )
-                        processes = await asyncio.gather(*requests)
+            if isinstance(fetch_result, FetchFailReason):
+                return fetch_result
 
-                        for process in processes:
-                            save_process(process, sink)
-        \end{minted}
-    \end{minipage}
+            request_args = TJRequestParams(
+                tipoProcesso=str(fetch_result.get("tipoProcesso")),
+                codigoProcesso=str(fetch_result.get("numProcesso")),
+            )
+
+            # Extração de todos os campos
+            async with session.post(
+                tj.main_endpoint,
+                json=request_args,
+                ssl=False,
+            ) as response:
+                raw_response = json.loads(await response.text())
+
+            return classify(raw_response, cnj_number, tj)
+    \end{minted}
     \caption{%
-        Reprodução do procedimento de busca por processos de maneira sequencial
-        (síncrona, à esquerda) e concorrente/não-bloqueante (assíncrona, à direita).
+        Reprodução do procedimento de busca por processos de maneira
+        assíncrona.
     }
-    \label{lst:requisição-processos-síncrona-e-assíncrona}
+    \label{cod:requisição-processos-síncrona-e-assíncrona}
 \end{listing}
+
+% Batches/semaphore
+
+Como forma de evitar sobrecarga dos servidores dos TJs por um excesso de
+requisições em um período curto de tempo causado pela implementação assíncrona,
+o que arriscaria sanções de algum dos servidores ou mesmo consumo excessivo de
+memória da máquina cliente devido à quantidade de objetos das Corrotinas
+instanciadas para as requisições, foi implementado um mecanismo limite de
+requisições simultâneas. O mecanismo funciona iterando pelas combinações em
+``lotes'' de tamanho fixo, em que cada lote dispara um número máximo de
+requisições e o próximo lote só é executado quando todas do atual tiverem sido
+tratadas.
+
+É necessário notar pela implementação que a iteração em blocos é sobre as
+combinações parciais --- ou seja, variando pelo valor do campo ``NNNNNNN'', de
+forma a ser interpretada como ``tentativa de se descobrir se existem um números
+de processo válidos dados determinados valores para o campo ``NNNNNNN''''.
+Sendo assim, um semáforo iniciado com o tamanho do lote é utilizado para
+garantir que as variações internas para o campo ``OOOO'' das combinações
+parciais não irão acidentalmente ultrapassar o limite do tamanho do lote.
 
 \subsection{Cache}
 
@@ -351,6 +384,12 @@ como o número do processo seguindo a numeração unificada, visto que é uma
 informação única a cada processo e, convenientemente, é o parâmetro de busca
 utilizado na extração, facilitando a separação de quais processos serão
 buscados na \textit{cache} e quais serão requisitados ao servidores dos TJs.
+
+Essa separação é uma operação trivial: para saber se um processo deve ou não
+ser requisitado aos servidores dos TJs, basta para cada número de processo da
+lista de números a serem buscados consultar, na \textit{cache}, se não existe
+uma entrada com esse número como valor da chave primária e que o valor de
+``cache\_state'' seja ``CACHED''.
 
 \begin{table}[htb]
     \small
@@ -392,18 +431,79 @@ buscados na \textit{cache} e quais serão requisitados ao servidores dos TJs.
     \label{tbl:valores-coluna-state}
 \end{table}
 
-Essa separação é uma operação trivial: para saber se um processo deve ou não
-ser requisitado aos servidores dos TJs, basta para cada número de processo da
-lista de números a serem buscados consultar, na \textit{cache}, se não existe
-uma entrada com esse número como valor da chave primária e que o valor de
-``cache\_state'' seja ``CACHED''.
+
+% TODO: talvez em algum ponto seja interessante colocar que:
+%
+%  Especificação da combinação
+%             |
+%             v
+%     Combinação parcial
+%             |
+%             v
+%         Combinação
 
 Um processo sempre é salvo na \textit{cache} quando o servidor do TJ responde à
 requisição referente a uma consulta por número de processo, com exceção de
-casos em que a resposta é um erro de captcha.
+casos em que a resposta é um erro de captcha. Ou seja, mesmo que durante uma
+consulta um processo seja filtrado, para referência e aceleração de consultas
+futuras ele ainda assim é salvo na \textit{cache}. Da mesma forma, combinações
+que não gerem números de processos existentes também são salvas na
+\textit{cache} com o estado \texttt{INVALID}.
 
-\todo{Falar sobre quando um processo é cacheado e quando não é}
+Consultas à \textit{cache} foram implementadas com consultas SQL aproveitando o
+registro de funções definidas em Python para as operações de filtragem,
+conforme código reproduzido na~\Cref{cod:restauração-dados-processos-cache}.
 
-\section{Implementação das interfaces}
+\begin{listing}[htb]
+    \tiny
+    \centering
+    \begin{minted}[autogobble,breaklines]{python}
+    def restore_json_for_ids(
+        cache_path: Path,
+        ids: list[CNJProcessNumber],
+        filter_function: Callable[[DBProcess], bool],
+    ) -> list[ProcessJSON]:
+        if not cache_path.exists():
+            raise FileNotFoundError(cache_path)
 
-\subsection{}
+        def is_id_in_list(id_: str) -> bool:
+            return to_cnj_number(id_) in ids
+
+        def custom_filter(number: str, state: CacheState, subject: str, json_str: str) -> bool:
+            try:
+                process = DBProcess(
+                    number, cache_state=state, subject=subject, json=json.loads(json_str)
+                )
+                return filter_function(process)
+            except Exception as error:
+                print(f"Failed to use custom filter: {error}")
+                raise
+
+        with sqlite3.connect(cache_path) as connection:
+            connection.create_function("is_in_list", 1, is_id_in_list)
+            connection.create_function("custom_filter", 4, custom_filter)
+            cursor = connection.cursor()
+
+            return [
+                json.loads(item_json)
+                for item_json, in cursor.execute(
+                    "select json from Processos"
+                    " where is_in_list(id)"
+                    " and custom_filter(id, cache_state, subject, json)",
+                )
+            ]
+
+        return []
+    \end{minted}
+    \caption{%
+        Reprodução do código de restauração dos dados de processos da
+        \textit{cache} a partir de filtros personalizados.
+    }
+    \label{cod:restauração-dados-processos-cache}
+\end{listing}
+
+% \section{Implementação das interfaces}
+%
+% % TODO: Simplificar: mostrar como ficaram, e mostrar código só se necessário.
+%
+% \subsection{}

@@ -27,7 +27,11 @@
 \usepackage{tabularx}
 \usepackage[table]{xcolor}
 \usepackage[normalem]{ulem}
+
 \usepackage[lined,boxed,ruled,commentsnumbered,portuguese]{algorithm2e}
+\crefname{algocf}{alg.}{algs.}
+\Crefname{algocf}{Algoritmo}{Algoritmos}
+
 \usepackage{tikz}
 
 \usepackage{lmodern}
@@ -39,7 +43,10 @@
 \usepackage{tikz}
 \usetikzlibrary{decorations.pathreplacing}
 \usepackage{pgfplots}
-\pgfplotsset{compat=newest}
+\pgfplotsset{
+  compat=newest,
+  table/search path={src},
+}
 \usepackage{pgfplotstable}
 \pgfplotstableset{col sep=comma}
 \usepackage{standalone}

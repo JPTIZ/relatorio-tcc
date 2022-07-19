@@ -1,22 +1,54 @@
-\chapter{Resultados experimentais~\label{chp:Resultados-Experimentais}}
+\chapter{Análises Experimentais~\label{chp:Resultados-Experimentais}}
 
-\begin{figure}[htb]
-    \caption{%
-        Relação entre o tamanho do passo de requisições e processos adquiridos
-        por \todo{segundo\protect\footnotemark{}}.
-    }
-    \label{gra:tempos-tamanhos-de-passo-async}
-\end{figure}
+Nesta seção estão descritos os resultados obtidos a partir de experimentos
+visando como objetivo principal averiguar a capacidade da ferramenta de obter e
+exportar dados de processos de um TJ em tempo viável. Para isso, adotou-se como
+critérios de análise o \textbf{tempo de varredura} de um intervalo de
+processos, separados entre tempo de CPU, IO de Rede e IO de Armazenamento, e o
+\textbf{tempo médio} para se descobrir um processo em um intervalo.
 
-\footnotetext{\todo{Verificar se por minuto não fica mais adequado (se o tempo de
-processamento em um segundo deixar muitos processos pendentes, no caso)}}
+\section{Configuração Experimental~\label{sec:Configuração-Experimental}}
+
+Os experimentos foram realizados em uma estação de trabalho com um Intel(R)
+Core(TM) i5-7300HQ CPU @ 2.50GHz, 16GB RAM DDR4 2133MHz e interface de rede
+1000Mbps em uma conexão residencial.
+
+Os dados de temporização foram obtidos através do perfilamento de uma chamada
+completa do processo de extração de um intervalo de processos variando os
+parâmetros com todas as combinações dos valores especificados
+na~\Cref{tbl:parâmetros-de-perfilamento}. Nas combinações com tamanho do lote
+em 1, o cenário é classificado como Síncrono (Sync), e os demais como
+Assíncrono (Async).
+
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{ll}
+    \toprule
+    Parâmetro & Valores \\
+    \midrule
+    Número inicial do intervalo & 15712 \\
+    Tamanho do intervalo (nº de processos) & 10, 50, 100, 1000 \\
+    Tamanho do lote & 1, 10, 100, 500, 1000 \\
+    \bottomrule
+  \end{tabular}
+  \caption{%
+    Valores utilizados para os parâmetros de extração de dados de processos.
+  }
+  \label{tbl:parâmetros-de-perfilamento}
+\end{table}
+
+\section{Resultados Experimentais}
+
+
 
 \todo{%
-    Comparar um cenário base (sem aplicar as estratégias) com:
+  Comparar um cenário base (sem aplicar as estratégias) com elas aplicadas.
+  De certa forma isso já e feito, pois B=1 já demonstra o não-uso de blocos e o
+  gráfico de sync já mostra a sincronia. Falta o gráfico para uso de cache com:
 }
 \begin{todolist}
-    \item Apenas uma das estratégias aplicadas (fazer para cada estratégia);
-    \item Com todas as estratégias aplicadas.
+  \item Metade dos intervalos com intersecção;
+  \item O intervalo inteiro com intersecção.
 \end{todolist}
 \todo{%
     A hipótese lançada é de que o maior tempo desprendido é com IO (e não
@@ -30,22 +62,28 @@ processamento em um segundo deixar muitos processos pendentes, no caso)}}
 \begin{figure}[htb]
     \centering
     \begin{tikzpicture}
+        \pgfplotstableread{io_stats-async-sync.csv}{\table}
+        \pgfplotstablegetcolsof{\table}
+        \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+        \pgfplotstablegetcolumnnamebyindex{0}\of{\table}\to{\colprincipal}
         \begin{axis}[
             ybar,
-            xmin=-20,
-            xmax=130,
-            xtick={10, 100, 1000},
+            enlarge x limits=0.15,
+            symbolic x coords={
+              10, 50, 100, 1000,
+            },
+            xtick=data,
+            xticklabels from table={\table}{\colprincipal},
             ylabel={Tempo (s)},
-            xlabel={Tamanho do bloco},
+            xlabel={Nº de processos},
             legend cell align=left,
             legend style={
                 legend pos=outer north east,
                 cells={align=left},
             },
+            width=0.7\textwidth,
+            clip=false,
         ]
-            \pgfplotstableread{io_stats-async-sync.csv}{\table}
-            \pgfplotstablegetcolsof{\table}
-            \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
             \pgfplotsinvokeforeach{1,...,\numberofcols}{
                 \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
                 \addplot table [y index=#1] {\table};
@@ -62,6 +100,56 @@ processamento em um segundo deixar muitos processos pendentes, no caso)}}
 \end{figure}
 
 \todo{%
+    Em vez de gerar gráfico de sync/async (mover este para a parte de
+    resultados), gerar um gráfico para IO/step\_size.
+}
+
+Resultados de ganhos para diferentes tamanhos de passo estão
+expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
+(\Cref{chp:Resultados-Experimentais}).
+
+\todo{Fazer comparativos para um intervalo grande de processos (100, 1000, 10000).}
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \pgfplotstableread{io_stats-batch-size.csv}{\table}
+        \pgfplotstablegetcolsof{\table}
+        \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+        \pgfplotstablegetcolumnnamebyindex{0}\of{\table}\to{\colprincipal}
+        \begin{axis}[
+            ybar,
+            enlarge x limits=0.15,
+            symbolic x coords={
+                10, 100, 500, 1000
+            },
+            ylabel={Tempo (s)},
+            xlabel={Tamanho do lote},
+            legend cell align=left,
+            legend style={
+                legend pos=outer north east,
+                cells={align=left},
+            },
+            xtick=data,
+            xticklabels from table={\table}{\colprincipal},
+            width=0.7\textwidth,
+            clip=false,
+        ]
+            \pgfplotsinvokeforeach{1,...,\numberofcols}{
+                \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
+                \addplot table [y index=#1] {\table};
+                \addlegendentryexpanded{\colname}
+            }
+        \end{axis}
+    \end{tikzpicture}
+    \caption{%
+        Comparação do tempo de obtenção de todos os processos de diferentes
+        intervalos conforme tamanho do lote.
+    }
+    \label{gra:tempos-tamanhos-de-passo-async}
+\end{figure}
+
+\todo{%
   Nos resultados experimentais, ver se o tempo médio de obtenção de processos
   ficou nessa linha dos 0.16ms lá.
 }
@@ -70,3 +158,11 @@ processamento em um segundo deixar muitos processos pendentes, no caso)}}
     \item Adicionar gráfico comparando o uso da cache para a mesma consulta com
           quando ela é feita com e sem caching.
 \end{todolist}
+
+\todo{%
+  Na hora de falar de Sync VS Async: Os dados de implementação síncrona foram
+  obtidos a partir da simulação de uma versão síncrona a partir da assíncrona
+  limitando o tamanho dos blocos a 1 processo. Nota-se que isso não interfere
+  na conclusão dos dados, visto que o impacto dessa simulação \review{se dá no
+  processamento em CPU e não no tempo de IO.}
+}
