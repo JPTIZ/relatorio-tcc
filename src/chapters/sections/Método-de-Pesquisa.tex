@@ -1,21 +1,21 @@
-\section{Método de Pesquisa}
+\section{Método de Desenvolvimento}
 
-\todo{Comentar que processos possuem várias instâncias e que este projeto foca
-em obter os processos de primeira instância.}
-\todo{Adicionar método de pesquisa (provavelmente não será "pesquisa").}
+O levantamento e avaliação de requisitos deste trabalho foi levantado com base
+no contato direto com dois profissionais da área de jornalismo investigativo
+através de reuniões ao longo de seu desenvolvimento. Pelo fato do Tribunal de
+Justiça do Estado do Rio de Janeiro (TJ-RJ) ser o mais informatizado no
+território brasileiro, ele é utilizado como ponto de partida da produção da
+ferramenta \tjscraper focando apenas nos seus processos em primeira instância
+para simplificação.
 
-\todo{%
-    Pode seguir na linha de ``o funcionamento da API foi descoberto por
-    tentativa e erro'', ``os resquisitos foram elencados em reuniões com
-    jornalistas investigativos''
-}
-
-\review{Por não ter sido encontrada uma documentação oficial, o funcionamento e
-respostas dadas pela API foram descobertos a partir de tentativa e erro.}
-
-\todo{%
-    Também deve incluir uma descrição de ``horário noturno'', na linha de
-    ``Devido a restrições de captcha contidas na página do TJ-RJ, as extrações
-    deverão ser feitas apenas no intervalo das <X>h às <Y>h, referenciado nesta
-    monografia como \textbf{Horário Noturno}.''.
-}
+O funcionamento das páginas, rotas e APIs disponibilizadas pelo portal do TJ-RJ
+são descobertos via tentativa e erro, em especial para as APIs pela falta de
+documentação disponível. O portal do TJ-RJ possui uma restrição em que apenas
+no período das 23h00 às 7h30, período o qual neste trabalho será referido como
+``horário noturno'', está disponível para ferramentas de raspagem de dados para
+acessá-lo livremente. Fora dessa faixa de horário, o acesso é bloqueado por
+meio de \textit{captchas} (pequenos ``quebra-cabeças'' que devem ser resolvidos
+para se obter acesso a uma página e os quais são inviáveis para softwares).
+Para contornar o horário noturno e permitir a produção da ferramenta em outros
+horários, foram criados testes unitários ao longo do desenvolvimento a partir
+de amostras de respostas de diferentes rotas do TJ-RJ.
