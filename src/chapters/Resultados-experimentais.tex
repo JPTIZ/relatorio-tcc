@@ -3,9 +3,10 @@
 Nesta seção estão descritos os resultados obtidos a partir de experimentos
 visando como objetivo principal averiguar a capacidade da ferramenta de obter e
 exportar dados de processos de um TJ em tempo viável. Para isso, adotou-se como
-critérios de análise o \textbf{tempo de varredura} de um intervalo de
-processos, separados entre tempo de CPU, IO de Rede e IO de Armazenamento, e o
-\textbf{tempo médio} para se descobrir um processo em um intervalo.
+critérios de análise o \textbf{tempo total da consulta} de
+um intervalo de processos, separados entre tempo de CPU, IO de Rede e IO de
+Armazenamento, e o \textbf{tempo médio} para se descobrir um processo em um
+intervalo.
 
 \section{Configuração Experimental~\label{sec:Configuração-Experimental}}
 
@@ -14,11 +15,11 @@ Core(TM) i5-7300HQ CPU @ 2.50GHz, 16GB RAM DDR4 2133MHz e interface de rede
 1000Mbps em uma conexão residencial.
 
 Os dados de temporização foram obtidos através do perfilamento de uma chamada
-completa do processo de extração de um intervalo de processos variando os
-parâmetros com todas as combinações dos valores especificados
-na~\Cref{tbl:parâmetros-de-perfilamento}. Nas combinações com tamanho do lote
-em 1, o cenário é classificado como Síncrono (Sync), e os demais como
-Assíncrono (Async).
+completa do processo de extração via API JSON do TJ-RJ de um intervalo de
+processos variando os parâmetros com todas as combinações dos valores
+especificados na~\Cref{tbl:parâmetros-de-perfilamento}. Nas combinações com
+tamanho do lote em 1, o cenário é classificado como Síncrono (Sync), e os
+demais como Assíncrono (Async).
 
 \begin{table}[htb]
   \centering
@@ -27,7 +28,7 @@ Assíncrono (Async).
     Parâmetro & Valores \\
     \midrule
     Número inicial do intervalo & 15712 \\
-    Tamanho do intervalo (nº de processos) & 10, 50, 100, 1000 \\
+    Tamanho do intervalo do campo ``NNNNNNN'' (nº de processos) & 10, 50, 100, 1000 \\
     Tamanho do lote & 1, 10, 100, 500, 1000 \\
     \bottomrule
   \end{tabular}
@@ -39,25 +40,19 @@ Assíncrono (Async).
 
 \section{Resultados Experimentais}
 
+A~\Cref{gra:tempos-async-vs-sync} mostra um comparativo do tempo decorrido para
+uma implementação síncrona e uma assíncrona nos diferentes cenários de
+configuração, com a~\Cref{tbl:tempos-async-vs-sync} expondo o tempo por
+processo do mesmo comparativo, obtido dividindo-se o tempo total naquela
+configuração pelo número de processos. Percebe-se por esses dados uma redução
+significativa no tempo de IO de Rede (de 66\% a 98\%) mantendo um tempo de CPU
+bastante próximo, demonstrando a eficiência do uso de requisições assíncronas.
 
-
-\todo{%
-  Comparar um cenário base (sem aplicar as estratégias) com elas aplicadas.
-  De certa forma isso já e feito, pois B=1 já demonstra o não-uso de blocos e o
-  gráfico de sync já mostra a sincronia. Falta o gráfico para uso de cache com:
-}
-\begin{todolist}
-  \item Metade dos intervalos com intersecção;
-  \item O intervalo inteiro com intersecção.
-\end{todolist}
-\todo{%
-    A hipótese lançada é de que o maior tempo desprendido é com IO (e não
-    processamento das requisições).
-    A conclusão deverá confirmar essa hipótese demonstrando que com a redução
-    (através de caching e através de requisições assíncronas) do gasto com IO o
-    tempo de consulta se reduz de forma diretamente proporcional.
-}
-
+É possível perceber que o uso de requisições assíncronas traz uma maior redução
+no tempo médio com uma quantidade maior de processos, uma vez que um conjunto
+de poucos processos tira pouco proveito da assincronia não substituindo o tempo
+de ociosidade com o tempo de se disparar mais requisições, enquanto um número
+maior é capaz de preencher esse tempo.
 
 \begin{figure}[htb]
     \centering
@@ -82,6 +77,7 @@ Assíncrono (Async).
                 cells={align=left},
             },
             width=0.7\textwidth,
+            height=14em,
             clip=false,
         ]
             \pgfplotsinvokeforeach{1,...,\numberofcols}{
@@ -93,22 +89,51 @@ Assíncrono (Async).
     \end{tikzpicture}
     \caption{%
       Comparativo de tempo desprendido com IO de Rede e processamento em CPU
-      entre o cenário com e sem a aplicação de programação assíncrona via IO
-      não-bloqueante (Async e Sync, respectivamente).
+      entre o cenário sem a aplicação de programação assíncrona via IO
+      não-bloqueante (Sync) e com a aplicação (Async).
     }
     \label{gra:tempos-async-vs-sync}
 \end{figure}
 
-\todo{%
-    Em vez de gerar gráfico de sync/async (mover este para a parte de
-    resultados), gerar um gráfico para IO/step\_size.
-}
+\begin{table}[htb]
+  \centering
+  \begin{tabular}{lllll}
+    \toprule
+     & \multicolumn{2}{c}{Sync} & \multicolumn{2}{c}{Async} \\
+    Nº de processos & IO de Rede & CPU & IO de Rede & CPU \\
+    \midrule
+    10 & 0.1850 & 0.0039 & 0.0158 & 0.0020 \\
+    50 & 0.2386 & 0.0104 & 0.0022 & 0.0026 \\
+    100 & 0.2021 & 0.0106 & 0.0012 & 0.0030 \\
+    1000 & 0.2272 & 0.0061 & 0.0008 & 0.0032 \\
+    \bottomrule
+  \end{tabular}
+  \caption{%
+    Tempo médio de busca por processo comparando os cenários Síncrono e
+    Assíncrono.
+  }
+  \label{tbl:tempos-async-vs-sync}
+\end{table}
 
-Resultados de ganhos para diferentes tamanhos de passo estão
-expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
-(\Cref{chp:Resultados-Experimentais}).
+Quanto à separação das requisições em lotes, as medições de temporização estão
+expostas na~\Cref{gra:tempos-tamanhos-de-passo-async}. Os resultados para um
+intervalo 10000 processos estão separados
+na~\Cref{gra:tempos-tamanhos-de-passo-async-10000-processos} para melhor
+visualização. De maneira geral, tamanhos de lote maiores ou iguais que 100
+tiveram resultados similares para quase todos os tamanhos de intervalo de
+processos, tendo como excepcionalidade o intervalo de 10 processos com tamanho
+do lote em 500. Essa excepcionalidade, porém serve apenas para uma observação
+comparativa, visto que TJs possuem na ordem de centenas de milhares de
+processos por ano.
 
-\todo{Fazer comparativos para um intervalo grande de processos (100, 1000, 10000).}
+Para analisar essas medidas é preciso levar em conta que, para evitar sanções e
+sem acesso a um \texttt{robots.txt}, não é possível ter sempre o tamanho do
+lote igual ao do intervalo de processos. Partindo dessa premissa, as medidas
+expõem que, ao menos para um intervalo de até 1000 processos com tamanhos de
+lote maiores ou iguais a 100, não há ganhos significativos em se manter o
+tamanho de lote tão próximo do tamanho do intervalo, porém para os casos de
+intervalos de tamanho 1000 e 10000 os lotes de tamanho 500 se demonstraram
+suficientes e com os melhores resultados.
 
 \begin{figure}[htb]
     \centering
@@ -149,20 +174,202 @@ expostos na~\todo{\Cref{gra:tempos-tamanhos-de-passo-async}}
     \label{gra:tempos-tamanhos-de-passo-async}
 \end{figure}
 
+Analisando-se o tempo de espera por IO de Rede
+na~\Cref{gra:tempos-tamanhos-de-passo-async-10000-processos}, dado em uma média
+aritmética por processo, percebe-se também que um tamanho de lote muito grande
+(nesse caso, 1000) acarreta em um aumento no tempo de espera, o que deve
+explicar o fato de que o tempo total de consulta passa a aumentar com relação
+aos lotes de tamanho 500.
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \pgfplotstableread{io_stats-batch-size-10000.csv}{\table}
+        \pgfplotstablegetcolsof{\table}
+        \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+        \pgfplotstablegetcolumnnamebyindex{0}\of{\table}\to{\colprincipal}
+        \begin{axis}[
+            ybar,
+            enlarge x limits=0.15,
+            symbolic x coords={
+                100, 500, 1000
+            },
+            bar shift=-0.5em,
+            ylabel={Tempo total (s)},
+            xlabel={Tamanho do lote},
+            axis y line*=left,
+            xtick=data,
+            ymin=0,
+            xticklabels from table={\table}{\colprincipal},
+            width=0.7\textwidth,
+            height=14em,
+            clip=false,
+            %legend style={at={(1,1)},anchor=north west},
+            legend style={at={(0,1.1)},anchor=south west},
+        ]
+            \pgfplotsinvokeforeach{1,...,\numberofcols}{
+                \pgfplotstablegetcolumnnamebyindex{#1}\of{\table}\to{\colname}
+                \addplot table [y index=#1] {\table};
+                \legend{Tempo total};
+            }
+        \end{axis}
+        \begin{axis}[
+            ybar,
+            enlarge x limits=0.15,
+            symbolic x coords={
+                100, 500, 1000
+            },
+            bar shift=0.5em,
+            axis y line*=right,
+            ylabel={Tempo (IO de Rede) (s)},
+            xlabel={Tamanho do lote},
+            xtick=data,
+            ymin=0,
+            xticklabels from table={\table}{\colprincipal},
+            width=0.7\textwidth,
+            height=14em,
+            clip=false,
+            legend style={at={(1,1.1)},anchor=south east},
+        ]
+          \addplot [
+            red,
+            fill=red!35,
+          ] coordinates {
+            (100, 1.27)
+            (500, 1.02)
+            (1000, 4.47)
+          };
+          \legend{Tempo de espera por IO de Rede};
+        \end{axis}
+    \end{tikzpicture}
+    \caption{%
+        Comparação do tempo de obtenção de todos os processos de um intervalo
+        de tamanho 10000 conforme tamanho do lote.
+    }
+    \label{gra:tempos-tamanhos-de-passo-async-10000-processos}
+\end{figure}
+
+Para medir a eficiência da \textit{cache}, foram separados três intervalos de
+valores para ``NNNNNNN'' com intersecção, $I_1 = [15712, 16712]$, $I_2 =
+[16212, 17212]$ e $I_3 = I_1 \cup I_2$, e 3 cenários
+diferentes~\Cref{tab:descrição-cenários-cache} com os mesmos parâmetros de
+consulta (com exceção do intervalo de processos). As medidas de eficiência,
+dadas em termos do tempo total de execução e do tempo gasto com IO de Rede
+(ambos em segundos) estão expostas na~\Cref{gra:tempo-cache}. A execução de
+cada cenário se dava com uma \textit{cache} inicialmente vazia.
+
+No cenário com intersecção completa (cenário $C$), como esperado, na consulta
+$C_2$ o tempo de IO de Rede é zerado visto que todos os processos que $C_2$
+baixaria já foram previamente salvos na \textit{cache} por $C_1$ e portanto
+sendo carregados dela em vez da rede. É interessante notar que, com isso, o
+tempo total da consulta também se reduziu drasticamente, demonstrando que o uso
+da \textit{cache} foi compensatório. No cenário com intersecção parcial
+(cenário $A$), novamente o tempo total de consulta também se reduziu
+significativamente além do tempo de IO de Rede. Comparando as consultas $A_2$ e
+$B$ (que operam sob o mesmo intervalo, $I_2$), reforçam-se as conclusões
+analisadas em $C$: para um mesmo intervalo, a \textit{cache} ainda que parcial
+foi capaz de reduzir ambos o tempo de IO de rede e o tempo total da consulta,
+sendo novamente compensatória.
+
+\begin{table}[htb]
+  \begin{tabular}{cp{0.4\textwidth}p{0.4\textwidth}}
+    \toprule
+    Cenário & Objetivo & Características \\
+    \midrule
+    A
+    &
+    Medir a eficiência da cache em reduzir parte do retrabalho.
+    &
+    Separado em duas consultas feitas em sequência: $A_1$ (intervalo $I_1$) e
+    $A_2$ (intervalo $I_2$). A \textit{cache} preenchida por $A_1$ é
+    reutilizada para $A_2$.
+    \\
+    B & Medir o tempo de $A_2$ sem \textit{cache}. & Uma única consulta no intervalo $I_2$.
+    \\
+    C
+    &
+    Averiguar se há compensação em utilizar a \textit{cache} para reduzir o
+    tempo de busca em caso de retrabalho.
+    &
+    Separado em duas consultas, $C_1$ e $C_2$, no intervalo $I_3$
+    reaproveitando a \textit{cache} preenchida por $C_1$ em $C_2$.
+    \\
+    \bottomrule
+  \end{tabular}
+  \caption{Descrição dos cenários utilizados para medição da eficiência da \textit{cache}.}
+  \label{tab:descrição-cenários-cache}
+\end{table}
+
+\begin{figure}[htb]
+    \centering
+    \begin{tikzpicture}
+        \pgfplotstableread{io_stats-cache-effect.csv}{\table}
+        \pgfplotstablegetcolsof{\table}
+        \pgfmathtruncatemacro\numberofcols{\pgfplotsretval-1}
+        \pgfplotstablegetcolumnnamebyindex{0}\of{\table}\to{\colprincipal}
+        \begin{axis}[
+            ybar,
+            bar shift=-0.5em,
+            enlarge x limits=0.15,
+            symbolic x coords={
+                A1, A2, B, C1, C2,
+            },
+            axis y line*=left,
+            ylabel={Tempo total (s)},
+            xlabel={Consulta},
+            legend cell align=left,
+            legend style={
+              at={(0,1.1)},
+              anchor=south west,
+            },
+            xtick=data,
+            xticklabels from table={\table}{\colprincipal},
+            ymin=0,
+            width=0.7\textwidth,
+            clip=false,
+        ]
+            \pgfplotstablegetcolumnnamebyindex{1}\of{\table}\to{\colname}
+            \addplot table [y index=1] {\table};
+            \addlegendentryexpanded{\colname}
+        \end{axis}
+        \begin{axis}[
+            ybar,
+            bar shift=0.5em,
+            enlarge x limits=0.15,
+            symbolic x coords={
+                A1, A2, B, C1, C2,
+            },
+            axis y line*=right,
+            ylabel={Tempo de espera por IO de Rede (s)},
+            legend cell align=left,
+            legend style={
+              at={(1,1.1)},
+              anchor=south east,
+            },
+            xtick=data,
+            xticklabels from table={\table}{\colprincipal},
+            ymin=0,
+            width=0.7\textwidth,
+            clip=false,
+        ]
+            \pgfplotstablegetcolumnnamebyindex{2}\of{\table}\to{\colname}
+            \addplot [red, fill=red!35] table [y index=2] {\table};
+            \addlegendentryexpanded{\colname}
+        \end{axis}
+    \end{tikzpicture}
+    \caption{%
+      Comparação do tempo de obtenção de todos os processos em 5 consultas
+      específicas a fim de demonstrar a eficiência do uso de \textit{cache}.
+    }
+    \label{gra:tempos-cache}
+\end{figure}
+
+\todo{%
+  Fazer um gráfico com quantas tentativas foram feitas para se obter o processo
+  naquele número para cada número do intervalo.
+}
+
 \todo{%
   Nos resultados experimentais, ver se o tempo médio de obtenção de processos
   ficou nessa linha dos 0.16ms lá.
-}
-
-\begin{todolist}
-    \item Adicionar gráfico comparando o uso da cache para a mesma consulta com
-          quando ela é feita com e sem caching.
-\end{todolist}
-
-\todo{%
-  Na hora de falar de Sync VS Async: Os dados de implementação síncrona foram
-  obtidos a partir da simulação de uma versão síncrona a partir da assíncrona
-  limitando o tamanho dos blocos a 1 processo. Nota-se que isso não interfere
-  na conclusão dos dados, visto que o impacto dessa simulação \review{se dá no
-  processamento em CPU e não no tempo de IO.}
 }

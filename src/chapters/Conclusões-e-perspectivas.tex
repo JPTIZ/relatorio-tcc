@@ -1,39 +1,90 @@
 \chapter{Conclusões e perspectivas~\label{chp:conclusions}}
 
-A estratégia de utilizar a API JSON não depende de reconhecimento de padrões
-textuais e sintáticos para obtenção de dados. Apesar de esta estratégia se
-demonstrar mais fácil e eficiente de se implementar e utilizar, ambas foram
-mantidas na ferramenta para a extração de dados em TJs que não possuam uma API
-JSON como a do TJ-RJ.
+Há pelo menos quatro pontos de vista que se permitem ser analisados neste
+trabalho: do propósito da ferramenta \tjscraper, dos resultados obtidos pelos
+experimentos, das decisões de projeto de implementação dela, e das escolhas de
+terceiros na modelagem e apresentação de dados da fonte de extração.
 
-\todo{Conclusões da parte dos TJs:}
-\begin{todolist}
-    \item Comentar o impacto da informatização de um sistema para além do
-          público-alvo direto do sistema (ex: quem se beneficia não é somente
-          um juíz, procurador, etc., mas também jornalistas que precisam de
-          estatísticas relacionadas aos processos).
-    \item Comentar sobre o impacto de decisões de formatos de distribuição e
-          APIs no processo de informatização.
-\end{todolist}
+No que se refere ao propósito da ferramenta, por ser capaz de obter os dados
+todos os processos de um Tribunal de Justiça, a partir do momento que se tem
+esses dados de alguma forma local independente do próprio portal do TJ há já um
+auxílio para jornalistas investigativos uma vez esses dados, convertidos para
+um formato de familiaridade do investigador, podem ser reorganizados da maneira
+que for mais conveniente para sua análise. Há, nisso, um detalhe curioso de que
+ainda que o propósito original em essência da ferramenta seja a exportação dos
+dados em um formato como uma planilha XLSX, o processo de implementação troca a
+finalidade para ser alimentar e gerenciar corretamente da \textit{cache} --- na
+prática uma replicação local de um banco de dados ---, sendo a exportação é um
+mero detalhe como um passo adicional desse processo.
 
-\todo{Conclusões da parte das bibliotecas:}
-\begin{todolist}
-    \item Comentar da dificuldade de testagem com Scrapy (por conta do Twisted).
-\end{todolist}
+Pelos resultados experimentais ficou confirmada a hipótese de que o gargalo do
+tempo de extração dos dados de processos estaria no tempo de IO (especialmente
+o de Rede). Atacando esse gargalo, as técnicas de aceleração de consulta
+aplicadas neste trabalho cumpriram seu objetivo de reduzir significativamente o
+tempo de consulta, chegando a --- considerando apenas IO de Rede --- cerca de
+4ms por processo. Ainda que não estejam dentro dos 0.78s mencionados
+no~\Cref{chp:construção-da-ferramenta}, se for considerado que processos do
+TJ-RJ costumam totalizar menos de 2 milhões de
+processos~\cite{conjur:tj-novos-processos,amaerj:tj-novos-processos} e
+considerando apenas o tempo de IO de Rede é possível extrair dados de todos os
+processos de um ano do TJ-RJ em menos de 30 dias. Uma observação pertinente é
+que, não se utilizando de \textit{threads} para a implementação das estratégias
+(e sim Corrotinas), a complexidade de implementação foi mínima visto que não
+foram necessários mecanismos de sincronização ou controle de condições de
+corrida. Dito isso, ainda há espaços para mais otimizações, como o
+reordenamento das unidades de origem de forma dinâmica ao longo da extração
+pelas que possuirem mais processos registrados (explorando uma potencial
+distribuição estatística). Com a presença da \textit{cache}, também, é possível
+que o trabalho de extração seja feito de forma distribuida e posteriormente
+unidos os registros de \textit{caches} de diferentes máquinas em uma única.
 
-\todo{%
-    Em algum lugar, descrever que na prática a cache passa a ser a finalidade
-    da extração e a exportação fica como um mero detalhe.
-}
+Do ponto de vista das decisões de projeto de implementação da \tjscraper, a
+estratégia de utilizar a API JSON, por não depender de reconhecimento de padrões
+textuais e sintáticos para obtenção de dados, se demonstrou mais fácil e
+eficiente de se implementar e utilizar. Ainda assim, a implementação da
+extração HTML servindo como prova de conceito e podendo ser útil para TJs que
+não possuam uma API JSON --- contando apenas com a exibição de páginas HTML ---
+foi mantida na base do código-fonte.
 
-\todo{Conclusões dos resultados experimentais:}
-\begin{todolist}
-    \item Tempo de IO realmente era o maior gargalo inicial para o tempo de consulta;
-    \item ...
-\end{todolist}
+Na questão de ferramentas, vale ressaltar que foram necessários meios não tão
+convencionais~\cite{tjscraper:commit-scrapy-run-spider} de se contornar
+problemas de implementação de Scrapy para a elaboração de testes unitários: por
+ser uma biblioteca mais antiga que o mecanismo de \texttt{async/await} de
+Python 3.5+, a Scrapy se baseou na Twisted, uma biblioteca cuja implementação
+se utiliza de estado global e mecanismos de controle que impedem a execução de
+uma ou mais \textit{spiders} mais de uma vez em um mesmo processo, dificultando
+a implementação de testes unitários (já que cada teste executaria uma
+\textit{spider} novamente). Com a implementação da extração via API JSON
+utilizando o mecanismo de \texttt{async/await}, porém, é possível reescrever a
+extração de processos via HTML utilizando uma biblioteca substituta para o uso
+de expressões XPath em cima desse mecanismo.
 
-\todo{Perspectivas:}
-\begin{todolist}
-    \item Expandir para outros TJs.
-    \item Tratar processos em múltiplas instâncias.
-\end{todolist}
+Além das otimizações possíveis, outros trabalhos que se desenrolam a partir
+deste incluem o suporte a outros TJs que não o TJ-RJ, o que demanda a
+investigação de quais possuem um processo vigente de informatização, e o
+tratamento de processos que possuam múltiplas instâncias.
+
+Por fim, do ponto de vista das escolhas de terceiros, observa-se que as
+decisões de um portal de dados e transparência, como é o caso dos TJs, impactam
+além do usuário-alvo original. Primeiramente, este trabalho só foi possível
+pois há, ainda que de maneira espalhada (múltiplos subdomínios com
+funcionamentos diferentes, por exemplo), algum grau de informatização.
+\review{Ele, cumprindo sua função, se torna mais uma ferramenta para que outros
+setores de pesquisa e/ou jornalísticos possam analisar e explicar à sociedade
+sobre fenômenos que ela vive, e portanto informatizar é também dar
+conhecimento.} Da mesma forma, porém, ele surge por consequência de uma
+``deficiência'' nos mecanismos de busca dos TJs do ponto de vista de facilitar
+que sejam feitas análises estatísticas, visto que um mero parâmetro ``Assunto''
+nas consultas processuais ou uma forma de listagem de processos facilitaria já
+o trabalho de quem faça tais análises ou de implementação de uma ferramenta
+semelhante à \tjscraper. Observando as decisões arquiteturais, algumas afetam
+de maneira potencialmente não esperada, a exemplo da existência de uma API JSON
+que, apesar de criada provavelmente para melhor implementar um sistema de SPA
+(\textit{Single-Page-Application}) no subdomínio ww3 do TJ-RJ, foi útil para se
+reduzir o esforço necessário para extração dos campos dos dados dos processos.
+A falta de documentação pública dessa API, porém, frequentemente se mostrou uma
+barreira durante a implementação, uma vez que novos formatos de resposta do
+servidor do TJ-RJ eram descobertos para processos específicos, ou mesmo com
+relação a não se saber se há formas de simplificação da implementação da
+ferramenta devido ao não conhecimento de parâmetros ou rotas que podem existir
+na API mas que não são conhecidos.
