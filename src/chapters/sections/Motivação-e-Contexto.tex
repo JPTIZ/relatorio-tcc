@@ -3,26 +3,57 @@
 % \todo{Comunicação social}
 % \todo{Mencionar sobre o pauteiro}
 % \todo{O que o JD faz é \textit{humanizar} esses dados, ou seja, pegar os dados e contar uma história.}
+% \todo{Por padrão o Pauteiro (profissão em decadência) é quem dava as pautas e
+% o jornalista ia, a partir da pauta, caçar os dados para que pudesse contar a
+% sua história, o que em alguns casos uma falha no processo de obtenção dos
+% dados significaria trabalho desperdiçado fomentando a produção de uma matéria
+% que não poderia mais ser feita.}
 % \todo{no Data-Driven Journalism você já tem as 6 perguntas do jornalismo respondidas, mas não tem o ``e daí?''.}
 
 O avanço das tecnologias de comunicação, gerando uma abundância maior de
 informações bastante notória principalmente com a popularização da internet,
-traz à área de jornalismo mudanças em seu modo de produção criando o que
-popularmente se chama ``jornalismo de dados''. A direção convencional da
-elaboração de matérias jornalísticas é que haja primeiro a presença do fenômeno
-e, posteriormente, se buscam dados e informações que complementem a descrição
-dele. No jornalismo de dados, a direção é a oposta: primeiro se tem os dados e,
-a partir deles, se conclui sobre a existência de um fenômeno que então é
-noticiado. % FIXME: Insira aqui uma reportagem.
-É exigido do jornalista, nesse caso, que ele tenha acesso a esses
-dados que por vezes se encontra disponível em formas difíceis de se agregar
-para elaborar estatísticas, seja por estarem dispersos ao longo de diferentes
-fontes de informação ou simplesmente não se é viável analisá-los somente pela
-forma como estão disponibilizados, como é o caso dos sites dos Tribunais
-Regionais de Justiça como o do Rio de Janeiro~\cite{tjrj} em que não se há uma
-maneira nem de realizar consultas processuais a partir de parâmetros mais
-abertos, como por assunto, nem de se obter alguma forma de resumo de todos os
-processos registrados.
+traz à área de jornalismo mudanças em seu modo de produção. Com o pauteiro
+guiando a linha editorial buscando fatos, tendências e fenômenos, é papel do
+jornalista narrar uma história --- ou seja, construir uma matéria ---  que
+corresponda a essas pautas e para isso buscar dados que respondam as respostas
+para as 6 perguntas básicas do jornalismo: Quem, O quê, Quando, Onde, Por Quê,
+e Como. Quando se trata de Jornalismo de Dados\footnote{Também chamado em
+inglês de \textit{Data-Driven Journalism}.}, esse volume maior de informações
+fornece a determinados jornalistas acesso a bases de dados que nelas essas
+perguntas já estão respondidas, mas não há nem uma \textbf{sintetização
+conclusiva} desses dados e tampouco uma \textbf{humanização}. É, por exemplo, o
+contraste entre tabelas contendo informações sobre sentenças, localidades e
+renda familiar, e uma matéria apontando que sentenças são mais severas para
+pessoas que moram em locais da
+periferia~\cite{news:sentenças-mais-severas-para-periferia}. O trabalho do
+jornalista de dados é então, em resumo, tratar de humanizar e apresentar esses
+dados ao público.
+
+% A direção convencional da
+% elaboração de matérias jornalísticas é que haja primeiro a presença do fenômeno
+% e, posteriormente, se buscam dados e informações que complementem a descrição
+% dele. No jornalismo de dados, a direção é a oposta: primeiro se tem os dados e,
+% a partir deles, se conclui sobre a existência de um fenômeno que então é
+% noticiado. % FIXME: Insira aqui uma reportagem.
+
+Porém ainda que se haja abundância de informação, isso não significa que ela
+esteja acessível de forma conveniente para jornalistas. Uma base de dados
+expressa em uma planilha, agregada em um CSV ou seguindo alguma implementação
+de SQL é manipulável por \textit{softwares} e bibliotecas que muitas vezes são
+Software-Livre (e portanto de livre uso~\cite{def:free-software}) e permitem a
+reorganização, filtragem, geração de gráficos estatísticos e outras tarefas
+conforme a necessidade de quem se propõe a escrever uma matéria jornalística.
+Já casos como os Tribunais Regionais de Justiça (TJs) brasileiros não fornecem
+dados processuais em nenhuma dessas formas, em vez disso o que há são
+resultados parciais (com relação ao todo dos processos registrados no portal do
+TJ) a partir de buscas pontuais como nome das partes, sentença, informações de
+advogados envolvidos, etc, ou seja, a informação está esparsa e tentar juntá-la
+manualmente pode ser humanamente impossível já que há milhões de processos pro
+ano em apenas um TJ como do Rio de Janeiro~\cite{tjrj}. Há uma demanda ---
+elencada em conversa com jornalistas --- pela sintetização desses dados e por
+consultas mais abrangentes, como busca pelo assunto do processo, assim um
+jornalista que atue com processos trabalhistas poderia analisar apenas os que
+dizem respeito essa área.
 
 Para casos como esse em que um portal de informações não as disponibiliza de
 forma conveniente, uma forma de contornar essa deficiência é através de
@@ -31,6 +62,6 @@ varredura de páginas da internet buscando e reorganizando dados de interesse de
 forma que possam ser posteriormente processados. O uso dessas ferramentas,
 chamadas de ``extratores'', para tais finalidades dentro do jornalismo de
 dados, aliado a outras práticas, caracteriza o ``jornalismo investigativo''.
-Para os Tribunais de Justiça (TJs), porém, não há --- ao menos acesso fácil e
-público --- esse tipo de ferramenta, dificultando o trabalho de jornalistas
-investigativos na obtenção e análise de processos.
+Para os TJs, porém, não há --- ao menos acesso fácil e público --- esse tipo de
+ferramenta, dificultando o trabalho de jornalistas investigativos na obtenção e
+análise de processos.
