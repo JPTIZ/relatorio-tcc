@@ -1,12 +1,14 @@
 \chapter{Construção da Ferramenta \tjscraper~\label{chp:construção-da-ferramenta}}
 
-A ferramenta \tjscraper~construída neste trabalho foi produzida para ser capaz
-de extrair com qualidade satisfatória os dados de processos dos Tribunais de
-Justiça (TJs), tendo no momento implementada a extração de dados
-especificamente do TJ do Rio de Janeiro (TJ-RJ). As estratégias empregadas,
-portanto, levam em conta acessos que todos os acessos serão ao TJ-RJ, ainda que
-visando a possibilidade de serem aplicadas às páginas dos TJs dos demais
-estados.
+A ferramenta \tjscraper~construída neste trabalho é um extrator produzido para
+ser capaz de extrair com qualidade satisfatória e em tempo hábil os dados de
+processos dos Tribunais de Justiça (TJs), tendo no momento implementada a
+extração de dados especificamente do TJ do Rio de Janeiro (TJ-RJ). As
+estratégias empregadas, portanto, levam em conta que todos os acessos serão ao
+TJ-RJ, ainda que visando a possibilidade de serem aplicadas às páginas dos TJs
+dos demais estados. Em resumo, a ferramenta acessa determinadas rotas (URLs) de
+TJs para obtendo dados processuais, armazena-os e possibilita exibi-los ou
+exportá-los como planilhas.
 
 Conforme critérios próprios deste trabalho, a qualidade dos dados extraídos
 será considerada satisfatória se:
@@ -22,6 +24,17 @@ será considerada satisfatória se:
     \item A forma como os dados estão guardados viabilize realizar consultas
         personalizadas neles, tais como busca por assunto.
 \end{itemize}
+
+A construção do extrator se dá majoritariamente em termos das estratégias
+elaboradas neste trabalho conforme as necessidades que emergiram ao longo de
+sua produção: descoberta de processos válidos registrados em um TJ a partir da
+avaliação dos parâmetros de busca e exploração de padrões na numeração de
+processos do CNJ; a aquisição dos dados desses processos, dada em termos da
+correta interpretação das respostas dadas em HTML e JSON para consultas ao
+TJ-RJ; e a redução do tempo por consulta através de requisições assíncronas e
+do retrabalho em novas consultas via criação de um banco de dados
+local\footnote{``Local'' dado em termos da máquina em que a ferramenta está
+executando.} para \textit{caching} dos resultados.
 
 \section{Estratégias de extração}
 
@@ -340,17 +353,31 @@ operações de IO (via IO não-bloqueante).
 \end{figure}
 
 Para ilustrar o mecanismo de requisições assíncronas,
-a~\Cref{gra:modelo-temporização-requisições} apresenta a ordem e quando ocorrem
-as operações relacionadas às requisições enviadas ao domínio de um TJ
-considerando um caso hipotético com tempos arbitrários de espera para as
-requisições. Para as requisições síncronas, o processador seria obrigado a
-esperar pela resposta do servidor antes de começar a próxima tarefa para só
-então efetuar a próxima requisição, enquanto no modelo com requisições
-assíncronas todas as requisições são disparadas no início e, conforme o
-servidor responde às requisições, suas respostas já são tratadas imediatamente.
-A consequência esperada no cenário exposto é em $Tempo = 12$ se concluir o
-tratamento de apenas uma única resposta no modelo síncrono, em contraste com o
-modelo assíncrono em que todas são tratadas nesse mesmo passo de tempo.
+a~\Cref{gra:modelo-temporização-requisições} compara como seriam executadas as
+operações de envio, espera e tratamento das requisições enviadas ao servidor de
+um TJ hipotético considerando a obtenção dos dados de 6 processos, enumerados
+como $P_{1...6}$. A sequência das operações estão em passos de tempo discretos
+ordenados da esquerda para direita, a linha ``Processador'' indica em qual
+operação o processador está trabalhando em um determinado passo de tempo e as
+linhas $E_{1...6}$ representam uma operação de IO relacionada a uma requisição
+$R_i$, como a espera pela resposta do servidor.
+%
+Para cada processo $P_i$, $R_i$ representa a operação de preparo e envio da
+requisição e $T_i$ representa a operação de tratamento da resposta do servidor
+do TJ a $R_i$ (por exemplo, classificação do processo como
+válido/inválido/inexistente ou reconhecimento de resposta com
+\textit{Captcha}).
+
+
+Nesse cenário hipotético com tempos arbitrários de espera para as requisições,
+para as requisições síncronas o processador seria obrigado a esperar pela
+resposta do servidor antes de começar a próxima tarefa para só então efetuar a
+próxima requisição, enquanto no modelo com requisições assíncronas todas as
+requisições são disparadas no início e, conforme o servidor responde às
+requisições, suas respostas já são tratadas imediatamente. A consequência
+esperada no cenário exposto é em $Tempo = 12$ se concluir o tratamento de
+apenas uma única resposta no modelo síncrono, em contraste com o modelo
+assíncrono em que todas são tratadas nesse mesmo passo de tempo.
 
 \begin{figure}[H]
     \begin{tikzpicture}
@@ -398,21 +425,8 @@ modelo assíncrono em que todas são tratadas nesse mesmo passo de tempo.
         \blocoE{6}{6}{5}
     \end{tikzpicture}
     \caption{%
-        Comparativo ilustrando como seriam executadas as operações de envio,
-        espera e tratamento das requisições enviadas ao servidor de um TJ
-        hipotético considerando a obtenção dos dados de 6 processos, enumerados
-        como $P_{1...6}$. A sequência das operações estão em passos de tempo
-        discretos ordenados da esquerda para direita. A linha ``Processador''
-        indica em qual operação o processador está trabalhando em um
-        determinado passo de tempo e as linhas $E_{1...6}$ representam uma
-        operação de IO relacionada a uma requisição $R_i$, como a espera pela
-        resposta do servidor.
-        %
-        Para cada processo $P_i$, $R_i$ representa a operação de preparo e
-        envio da requisição e $T_i$ representa a operação de tratamento da
-        resposta do servidor do TJ a $R_i$ (por exemplo, classificação do
-        processo como válido/inválido/inexistente ou reconhecimento de resposta
-        com \textit{Captcha}).
+        Comparativo do mecanismo de requisições síncronas e assíncronas em um
+        cenário hipotético.
     }
     \label{gra:modelo-temporização-requisições}
 \end{figure}
