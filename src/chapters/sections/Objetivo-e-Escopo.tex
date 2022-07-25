@@ -6,8 +6,13 @@ raspagem de dados especializada em tribunais de justiça do Brasil de forma que
 a adição de suporte a um novo tribunal de justiça não acarrete em reescrever
 significativamente a ferramenta. A ferramenta, nomeada \textbf{\tjscraper},
 para o escopo deste trabalho se limita a apenas processos em primeira
-instância.
+instância do Tribunal de Justiça do Estado do Rio de Janeiro (TJ-RJ).
 
-\todo{Lembrar o que eu queria escrever a mais aqui :(. Dica: tinha a ver com o
-que estava mudando na Construção da Ferramenta, talvez algo resumindo bem o
-trabalho que foi feito.}
+Este trabalho também propõe, para implementação da ferramenta, estratégias para
+aceleração das consultas que ataquem os seguintes problemas: o acúmulo do tempo
+de espera entre o envio de requisições e o recebimento de suas respostas, e o
+retrabalho causado por consultas subsequentes cujos processos que extrairiam se
+interseccionem com processos que já foram previamente extraídos por uma
+consulta anterior. Para tal, deve-se ter também a construção da especificação
+de uma base de dados que considere a possibilidade de exportação para outros
+formatos.

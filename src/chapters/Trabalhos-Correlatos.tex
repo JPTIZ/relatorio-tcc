@@ -1,2 +1,24 @@
 \chapter{Trabalhos Correlatos~\label{chp:related-work}}
 
+De outros extratores de Tribunais de Justiça, a~\cite{plexi-api} é uma API
+JSON\footnote{``API JSON'', neste trabalho, se refere a serviços Web que
+utilizam elementos das requisições HTTP para dar acesso a uma API que responde
+com objetos JSON.} que fornece consultas processuais simples a diversos portais
+públicos (TJ-RJ incluso), sem focar em jornalismo de dados. As rotas que esta
+API possui para acesso a dados do portal do TJ-RJ incluem apenas consultas com
+os mesmos parâmetros/campos de busca dele, tendo os acessos feitos ao
+subdomínio http://www4.tjrj.jus.br/ (o mesmo apresentado
+na~\Cref{sec:extração-html}). Bastante semelhante a esta é a~\cite{intima.ai},
+também fornecendo dados processuais apenas sabendo informações prévias sobre
+eles (neste, necessariamente o número do processo), com diferenças na forma de
+uso. A~\cite{codilo-api}, também uma API, possui uma intersecção maior com os
+recursos deste trabalho: alimenta uma base de dados local, fornece
+\textit{softwares} extratores de dados jurídicos, e permite a consulta de
+processos. Não é claro em sua apresentação sobre detalhes a respeito de quais
+dados os extratores são responsáveis por capturar, dificultando um levantamento
+de seus limites. O que se sabe, porém, é que as fontes de extração são portais
+diferentes dos utilizados no \tjscraper, como o PJe (Processo Judicial
+Eletrônico) para processos trabalhistas e o Projudi para os estaduais. Essas
+três ferramentas não são abertas nem de Software-Livre. São, inclusive, pagas
+(a~\cite{intima.ai} através da compra de créditos que são gastos ao longo das
+consultas).
