@@ -19,6 +19,40 @@ dados os extratores são responsáveis por capturar, dificultando um levantament
 de seus limites. O que se sabe, porém, é que as fontes de extração são portais
 diferentes dos utilizados no \tjscraper, como o PJe (Processo Judicial
 Eletrônico) para processos trabalhistas e o Projudi para os estaduais. Essas
-três ferramentas não são abertas nem de Software-Livre. São, inclusive, pagas
-(a~\cite{intima.ai} através da compra de créditos que são gastos ao longo das
-consultas).
+três ferramentas não são abertas nem de \textbf{Software-Livre}\footnote{Um
+\textbf{Software-Livre} é aquele atende a quatro liberdades
+essenciais~\cite{def:free-software}: a de se executá-lo como desejar, de
+estudá-lo e modificá-lo, de redistribuí-lo, e de redistribuir cópias de edições
+modificadas dele.}. São, inclusive, pagas (a~\cite{intima.ai} através da compra
+de créditos que são gastos ao longo das consultas). A
+~\Cref{tab:comparação-ferramentas-relacionadas} resume as diferenças entre as
+ferramentas descritas.
+
+
+\begin{table}[htb]
+    \tiny
+    \centering
+    \begin{tabular}{p{0.2\textwidth}p{0.16\textwidth}p{0.16\textwidth}p{0.16\textwidth}p{0.16\textwidth}}
+        \toprule
+        \textbf{Característica} & \textbf{\cite{plexi-api}} & \textbf{\cite{intima.ai}} & \textbf{\cite{codilo-api}} & \textbf{\tjscraper} \\
+        \midrule
+        Tipo & API Web & API Web & API Web & Biblioteca/API Web \\
+        Licença & Não especificada & Não especificada & Não especificada & GPL-v3 \\
+        Parâmetros de busca & Mesmos do TJ-RJ & Número do Processo & Não especificado & Numeração Unificada, Assunto, Ano \\
+        Campos dos processos disponibilizados & Todos & Todos & Não especificado & Todos \\
+        Restrição de acesso a dados & Token de acesso (pago) & Crédito (pago) por busca & Negociação com a empresa & Nenhuma \\
+        Banco de Dados local & Não & Não & Integração com BD pré-existente do cliente & Sim (próprio da ferramenta) \\
+        \toprule
+        \textbf{Fonte (TJ-RJ)} & & & \\
+        \midrule
+        Projudi &   &   & \checkmark \\
+        PJe & \checkmark & \checkmark & \checkmark \\
+        Consulta Processual & \checkmark & Não especificado & \checkmark & \checkmark \\
+        \bottomrule
+    \end{tabular}
+    \caption{%
+        Comparação de características de outras ferramentas com objetivos
+        semelhantes à TJScraper.
+    }
+    \label{tab:comparação-ferramentas-relacionadas}
+\end{table}

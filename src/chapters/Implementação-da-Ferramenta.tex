@@ -96,7 +96,7 @@ passos:
         números de processos é enviado para o passo
         do~\cref{item:chamada-de-função}.
     \item \label{item:chamada-de-função} Chamada da função de extração conforme
-        a estratégia de extração utilizado (HTML ou API JSON);
+        a estratégia de extração utilizada (HTML ou API JSON);
     \item Exportação dos dados advindos do~\cref{item:chamada-de-função} no
         formato escolhido pelo usuário suportado pela ferramenta.
 \end{enumerate}
@@ -126,7 +126,7 @@ determinados como:
                 inexistente ou se há a exigência de preenchimento de um
                 \textit{captcha}.
             \item Caso seja um processo válido, buscam-se na página os campos
-                desejados utilizando
+                desejados.
         \end{enumerate}
 \end{enumerate}
 
@@ -369,11 +369,11 @@ tratadas.
 
 É necessário notar pela implementação que a iteração em blocos é sobre as
 combinações parciais --- ou seja, variando pelo valor do campo ``NNNNNNN'', de
-forma a ser interpretada como ``tentativa de se descobrir se existem um números
-de processo válidos dados determinados valores para o campo ``NNNNNNN''''.
-Sendo assim, um semáforo iniciado com o tamanho do lote é utilizado para
-garantir que as variações internas para o campo ``OOOO'' das combinações
-parciais não irão acidentalmente ultrapassar o limite do tamanho do lote.
+forma a ser interpretada como ``tentativa de se descobrir se existe um número
+de processo válido dados determinados valores para o campo ``NNNNNNN''''. Sendo
+assim, um semáforo iniciado com o tamanho do lote é utilizado para garantir que
+as variações internas para o campo ``OOOO'' das combinações parciais não irão
+acidentalmente ultrapassar o limite do tamanho do lote.
 
 Em busca de alguma informação sobre limites de tráfego definidos pelo TJ-RJ,
 tentou-se procurar se alguma dos caminhos intermediários da rota de consulta

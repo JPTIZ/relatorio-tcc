@@ -14,12 +14,13 @@ Os experimentos foram realizados em uma estação de trabalho com um Intel(R)
 Core(TM) i5-7300HQ CPU @ 2.50GHz, 16GB RAM DDR4 2133MHz e interface de rede
 1000Mbps em uma conexão residencial.
 
-Os dados de temporização foram obtidos através do perfilamento de uma chamada
-completa do processo de extração via API JSON do TJ-RJ de um intervalo de
-processos variando os parâmetros com todas as combinações dos valores
-especificados na~\Cref{tbl:parâmetros-de-perfilamento}. Nas combinações com
-tamanho do lote em 1, o cenário é classificado como Síncrono (Sync), e os
-demais como Assíncrono (Async).
+Os dados de temporização foram obtidos através da média dos tempos de 3
+execuções do perfilamento de uma chamada completa do processo de extração via
+API JSON do TJ-RJ de um intervalo de processos variando os parâmetros com todas
+as combinações dos valores especificados
+na~\Cref{tbl:parâmetros-de-perfilamento}, com o intervalo inicial (15712)
+escolhido arbitrariamente. Nas combinações com tamanho do lote em 1, o cenário
+é classificado como Síncrono (Sync), e os demais como Assíncrono (Async).
 
 \begin{table}[htb]
   \centering
@@ -33,7 +34,7 @@ demais como Assíncrono (Async).
     \bottomrule
   \end{tabular}
   \caption{%
-    Valores utilizados para os parâmetros de extração de dados de processos.
+      Valores utilizados para os parâmetros de extração de dados de processos.
   }
   \label{tbl:parâmetros-de-perfilamento}
 \end{table}
@@ -44,9 +45,10 @@ A~\Cref{gra:tempos-async-vs-sync} mostra um comparativo do tempo decorrido para
 uma implementação síncrona e uma assíncrona nos diferentes cenários de
 configuração, com a~\Cref{tbl:tempos-async-vs-sync} expondo o tempo por
 processo do mesmo comparativo, obtido dividindo-se o tempo total naquela
-configuração pelo número de processos. Percebe-se por esses dados uma redução
-significativa no tempo de IO de Rede (de 66\% a 98\%) mantendo um tempo de CPU
-bastante próximo, demonstrando a eficiência do uso de requisições assíncronas.
+configuração pelo número de processos. Percebe-se por esses dados que passando
+do cenário síncrono para o assíncrono há uma redução significativa no tempo de
+IO de Rede (de 66\% a 98\%) mantendo um tempo de CPU bastante próximo,
+demonstrando a eficiência do uso de requisições assíncronas.
 
 É possível perceber que o uso de requisições assíncronas traz uma maior redução
 no tempo médio com uma quantidade maior de processos, uma vez que um conjunto
@@ -88,7 +90,7 @@ maior é capaz de preencher esse tempo.
         \end{axis}
     \end{tikzpicture}
     \caption{%
-      Comparativo de tempo desprendido com IO de Rede e processamento em CPU
+      Comparativo de tempo despendido com IO de Rede e processamento em CPU
       entre o cenário sem a aplicação de programação assíncrona via IO
       não-bloqueante (Sync) e com a aplicação (Async).
     }
